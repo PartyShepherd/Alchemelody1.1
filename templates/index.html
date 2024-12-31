@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alchemelody</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: black;
+            color: white;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the header elements */
+            margin: 20px 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-family: "Fontdiner Swanky", serif; /* Apply Fontdiner Swanky to the title */
+        }
+        .header img {
+            width: 50px;
+            height: auto;
+            margin-left: 10px; /* Space between text and image */
+        }
+        .subheading {
+            font-family: 'Playfair Display', serif; /* Match the subheading font */
+            font-size: 1.2rem;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            font-style: italic; /* Set subheading back to italics */
+        }
+        form {
+            margin-top: 10px;
+            display: inline-block;
+            text-align: center;
+        }
+        input {
+            padding: 5px;
+            font-size: 0.9rem;
+            width: 100px; /* Smaller width for input boxes */
+            margin: 5px;
+        }
+        .input-label {
+            display: inline-block;
+            margin: 5px;
+            font-size: 0.9rem;
+        }
+        button {
+            padding: 5px 10px;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            color: black; /* Black button text */
+            font-family: 'Playfair Display', serif;
+            font-weight: bold;
+            font-style: normal; /* No italics */
+            border-radius: 5px;
+        }
+        button.Sun {
+            background-color: orange;
+        }
+        button.Mars {
+            background-color: red;
+        }
+        button.Venus {
+            background-color: green;
+        }
+        button.Jupiter {
+            background-color: purple;
+        }
+        button.Moon {
+            background-color: blue;
+        }
+        button.Mercury {
+            background-color: yellow;
+        }
+        button.Saturn {
+            background-color: indigo;
+        }
+        .hour-entry {
+            margin: 10px;
+            padding: 10px;
+            text-align: center; /* Center align the time and button */
+        }
+        .planet-time {
+            color: white; /* White text for planetary times */
+            font-family: "Fontdiner Swanky", serif; /* Restored to Fontdiner Swanky font */
+        }
+        #flash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Alchemelody</h1>
+        <img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
+    </div>
+    <p class="subheading">Official App of the band: The Source of All</p>
+
+    <form method="POST">
+        <label class="input-label" for="latitude">Latitude:</label>
+        <input type="text" name="latitude" id="latitude" placeholder="Enter Latitude" value="{{ location.latitude }}" required>
+        <label class="input-label" for="longitude">Longitude:</label>
+        <input type="text" name="longitude" id="longitude" placeholder="Enter Longitude" value="{{ location.longitude }}" required>
+        <button type="submit">Set Location</button>
+    </form>
+
+    <div id="flash"></div>
+    <ul>
+        {% for time, planet in hours %}
+        <li class="hour-entry">
+            <span class="planet-time {{ planet }}">{{ time }}</span>
+            <button 
+                class="{{ planet }}" 
+                onclick="playSound('{{ planet }}', '{{ colors[planet] }}')">
+                Play {{ planet }}
+            </button>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <script>
+        function flashColor(color) {
+            const flashDiv = document.getElementById("flash");
+            flashDiv.style.backgroundColor = color;
+            flashDiv.style.display = "block";
+            setTimeout(() => {
+                flashDiv.style.display = "none";
+            }, 500); // Flash duration
+        }
+
+        function playSound(planet, color) {
+            // Flash the corresponding color
+            flashColor(color);
+
+            // Browser playback
+            const soundUrl = `/static/sounds/${planet}.wav`;
+            const audio = new Audio(soundUrl);
+
+            audio.onerror = function () {
+                console.error(`Failed to load audio for ${planet} at ${soundUrl}`);
+                alert("Unable to play audio. Check the file format or URL.");
+            };
+
+            audio.play().catch((error) => {
+                console.error("Error playing audio:", error);
+                alert("Playback failed. Ensure browser permissions allow audio.");
+            });
+
+            // Server-side playback for debugging
+            fetch("/play", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ planet }),
+            })
+            .then(response => response.json())
+            .then(data => console.log(data.message))
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</body>
+</html>
