@@ -1,12 +1,12 @@
 from flask import Flask, render_template, request, jsonify
 from datetime import datetime, timedelta
 import json
-import math
 import requests
+import os
 
 app = Flask(__name__)
 
-# Define planetary hour colors and sounds
+# Define planetary hour colors
 colors = {
     "Sun": "orange",
     "Mars": "red",
@@ -21,8 +21,11 @@ planets = ["Sun", "Venus", "Mercury", "Moon", "Saturn", "Jupiter", "Mars"]
 
 # Helper to calculate planetary hours
 def calculate_planetary_hours(latitude, longitude):
-    # Get sunrise and sunset times using OpenWeatherMap API (replace YOUR_API_KEY)
-    api_key = "7dca6cb61c09d9eb9e38e68fea06b80e"
+    api_key = os.environ.get("API_KEY")
+    if not api_key:
+        raise ValueError("API_KEY environment variable not set")
+
+    # Get sunrise and sunset times from OpenWeatherMap API
     url = f"http://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={api_key}"
     response = requests.get(url)
     data = response.json()
@@ -52,12 +55,12 @@ def calculate_planetary_hours(latitude, longitude):
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    # Load saved location or use a default location
+    # Load saved location or use default
     try:
         with open("location.json", "r") as f:
             location = json.load(f)
     except FileNotFoundError:
-        location = {"latitude": 40.4406, "longitude": -79.9959}  # Default to Pittsburgh
+        location = {"latitude": 40.4406, "longitude": -79.9959}  # Pittsburgh default
 
     # Handle location updates
     if request.method == "POST":
@@ -68,7 +71,7 @@ def index():
             with open("location.json", "w") as f:
                 json.dump(location, f)
 
-    # Calculate planetary hours for the given location
+    # Calculate planetary hours
     hours = calculate_planetary_hours(location["latitude"], location["longitude"])
     return render_template("index.html", hours=hours, colors=colors, location=location)
 
@@ -78,9 +81,11 @@ def play_sound():
     planet = data.get("planet")
     if not planet:
         return jsonify({"message": "No planet provided"}), 400
-    # Simulate playing a sound for debugging purposes
+
+    # Debug: server-side playback
     print(f"Playing sound for {planet}")
     return jsonify({"message": f"Playing sound for {planet}"}), 200
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001, debug=True)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port, debug=True)
