@@ -119,7 +119,7 @@ button.Saturn { background-color: indigo; }
 </form>
 
 <div id="flash"></div>
-<button id="consent" style="display:none;">Enable Background Alarm</button>
+<button id="consent">Enable Background Alarm</button>
 
 <ul>
 {% for time, planet in hours %}
@@ -135,7 +135,9 @@ button.Saturn { background-color: indigo; }
 <script>
 let consentGiven = localStorage.getItem("alarmConsent") === "true";
 
-if(!consentGiven){
+if(consentGiven){
+    document.getElementById("consent").style.display = "none";
+} else {
     document.getElementById("consent").style.display = "block";
 }
 
@@ -160,12 +162,14 @@ function playSound(planet, color){
     fetch("/play", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({planet})});
 }
 
-// Background alarm logic
+// Background alarm logic with correct planet color
 function checkPlanetaryHours(){
     if(!consentGiven) return;
     const now = new Date();
     document.querySelectorAll(".hour-entry").forEach(entry=>{
-        const [timeText, planet] = entry.querySelector("span").textContent.split(" - ");
+        const text = entry.querySelector("span").textContent;
+        const [timeText, planet] = text.split(" - ");
+        const color = {{ colors|tojson }}[planet];
         let [hour, minutePart] = timeText.split(":");
         let minute = parseInt(minutePart);
         if(minutePart.includes("PM") && hour != "12") hour = parseInt(hour)+12;
@@ -173,7 +177,7 @@ function checkPlanetaryHours(){
         const nowHour = now.getHours();
         const nowMinute = now.getMinutes();
         if(parseInt(hour)==nowHour && minute==nowMinute){
-            playSound(planet, "{{ colors[planet] }}");
+            playSound(planet, color);
         }
     });
 }
