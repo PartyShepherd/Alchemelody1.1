@@ -2,126 +2,32 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Alchemelody</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
-
+    <title>Planetary Hours</title>
     <style>
-        body {
-            background: black;
-            color: white;
-            font-family: Arial, sans-serif;
-            text-align: center;
-        }
-        button {
-            padding: 8px 14px;
-            margin: 6px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        #flash {
-            position: fixed;
-            inset: 0;
-            display: none;
-            z-index: 999;
-        }
-        .hour-entry {
-            margin: 10px 0;
-        }
+        body { font-family: sans-serif; text-align: center; margin: 50px; }
+        .hour { margin: 5px 0; }
+        button { margin-left: 10px; }
     </style>
 </head>
-
 <body>
+    <h1>Planetary Hours</h1>
+    <div>
+        {% for hour in hours %}
+            <div class="hour">
+                <strong>{{ hour.time }}</strong> - {{ hour.planet }}
+                <button onclick="playSound('{{ hour.planet }}.wav')">Play</button>
+            </div>
+        {% endfor %}
+    </div>
 
-<h1>Alchemelody</h1>
-<p>Planetary Hours Alarm</p>
-
-<button onclick="enableAlarms()">Enable Planetary Alarms</button>
-<p id="alarm-status">Alarms inactive</p>
-
-<form method="POST">
-    <input name="latitude" value="{{ location.latitude }}" required>
-    <input name="longitude" value="{{ location.longitude }}" required>
-    <button type="submit">Set Location</button>
-</form>
-
-<div id="flash"></div>
-
-<ul>
-{% for time, planet in hours %}
-    <li class="hour-entry" data-planet="{{ planet }}" data-time="{{ time }}">
-        {{ time }} —
-        <button onclick="playSound('{{ planet }}')">
-            Play {{ planet }}
-        </button>
-    </li>
-{% endfor %}
-</ul>
-
-<script>
-const colors = {{ colors | tojson }};
-let audioUnlocked = false;
-let lastPlanet = null;
-
-// Flash screen
-function flashColor(color) {
-    const f = document.getElementById("flash");
-    f.style.backgroundColor = color;
-    f.style.display = "block";
-    setTimeout(() => f.style.display = "none", 400);
-}
-
-// Manual play (unchanged)
-function playSound(planet) {
-    const audio = new Audio(`/static/sounds/${planet}.wav`);
-    audio.play().catch(console.error);
-    flashColor(colors[planet]);
-}
-
-// Unlock audio + start alarms
-function enableAlarms() {
-    const a = new Audio(`/static/sounds/Sun.wav`);
-    a.volume = 0;
-    a.play().then(() => {
-        audioUnlocked = true;
-        document.getElementById("alarm-status").innerText = "Alarms enabled";
-        startScheduler();
-    }).catch(() => alert("Tap again to enable audio"));
-}
-
-// Determine current planetary hour
-function getCurrentPlanet() {
-    const now = new Date();
-    const entries = document.querySelectorAll(".hour-entry");
-
-    let current = null;
-
-    entries.forEach(e => {
-        const [h, m] = e.dataset.time.split(":").map(Number);
-        const t = new Date();
-        t.setHours(h, m, 0, 0);
-        if (now >= t) current = e.dataset.planet;
-    });
-
-    return current;
-}
-
-// Auto-trigger once per hour
-function startScheduler() {
-    setInterval(() => {
-        if (!audioUnlocked) return;
-
-        const planet = getCurrentPlanet();
-        if (!planet || planet === lastPlanet) return;
-
-        lastPlanet = planet;
-        const audio = new Audio(`/static/sounds/${planet}.wav`);
-        audio.play().catch(console.error);
-        flashColor(colors[planet]);
-    }, 30000);
-}
-</script>
-
+    <script>
+        function playSound(soundFile) {
+            const audio = new Audio(`/static/sounds/${soundFile}`);
+            audio.play().catch(err => {
+                alert("Unable to play audio. Check browser permissions and file URL.");
+                console.error(err);
+            });
+        }
+    </script>
 </body>
 </html>
