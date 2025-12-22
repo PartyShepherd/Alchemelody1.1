@@ -1,6 +1,5 @@
 import os
 import json
-import requests
 from datetime import datetime, timedelta
 from flask import Flask, render_template, jsonify
 
@@ -8,59 +7,84 @@ app = Flask(__name__)
 
 LOCATION_FILE = "location.json"
 
+PLANET_ORDER = [
+    "Sun",
+    "Venus",
+    "Mercury",
+    "Moon",
+    "Saturn",
+    "Jupiter",
+    "Mars",
+]
 
-# -----------------------------
-# Location handling
-# -----------------------------
+WEEKDAY_RULERS = {
+    0: "Moon",
+    1: "Mars",
+    2: "Mercury",
+    3: "Jupiter",
+    4: "Venus",
+    5: "Saturn",
+    6: "Sun",
+}
+
+
 def load_location():
     if not os.path.exists(LOCATION_FILE):
-        default_location = {
-            "latitude": 40.4406,
-            "longitude": -79.9959,
-            "name": "Pittsburgh"
-        }
-        with open(LOCATION_FILE, "w") as f:
-            json.dump(default_location, f, indent=2)
-        return default_location
-
+        return {"latitude": 0, "longitude": 0}
     with open(LOCATION_FILE, "r") as f:
         return json.load(f)
 
 
-# -----------------------------
-# Planetary hours calculation
-# -----------------------------
-def calculate_planetary_hours(lat, lon):
-    api_key = os.getenv("OPENWEATHER_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENWEATHER_API_KEY not set")
+def calculate_planetary_hours():
+    now = datetime.now()
 
-    url = (
-        "https://api.openweathermap.org/data/2.5/weather"
-        f"?lat={lat}&lon={lon}&appid={api_key}"
-    )
+    sunrise = now.replace(hour=6, minute=0, second=0)
+    sunset = now.replace(hour=18, minute=0, second=0)
 
-    response = requests.get(url, timeout=10)
-    data = response.json()
+    day_length = (sunset - sunrise) / 12
+    night_length = (sunrise + timedelta(days=1) - sunset) / 12
 
-    # 🔒 HARD VALIDATION (prevents KeyError crashes)
-    if (
-        not isinstance(data, dict)
-        or "sys" not in data
-        or "sunrise" not in data["sys"]
-        or "sunset" not in data["sys"]
-    ):
-        raise RuntimeError(f"Invalid OpenWeather response: {data}")
+    weekday_ruler = WEEKDAY_RULERS[now.weekday()]
+    start_index = PLANET_ORDER.index(weekday_ruler)
 
-    sunrise = datetime.utcfromtimestamp(data["sys"]["sunrise"])
-    sunset = datetime.utcfromtimestamp(data["sys"]["sunset"])
+    hours = []
+    current_time = sunrise
 
-    day_length = (sunset - sunrise).total_seconds()
-    planetary_hour_length = day_length / 12
+    for i in range(12):
+        planet = PLANET_ORDER[(start_index + i) % 7]
+        hours.append({
+            "planet": planet,
+            "start": current_time.strftime("%H:%M"),
+            "end": (current_time + day_length).strftime("%H:%M"),
+            "sound": f"/static/sounds/{planet}.wav"
+        })
+        current_time += day_length
 
-    planets = [
-        "Saturn",
-        "Jupiter",
-        "Mars",
-        "Sun",
-        "Venus",
+    current_time = sunset
+
+    for i in range(12):
+        planet = PLANET_ORDER[(start_index + 12 + i) % 7]
+        hours.append({
+            "planet": planet,
+            "start": current_time.strftime("%H:%M"),
+            "end": (current_time + night_length).strftime("%H:%M"),
+            "sound": f"/static/sounds/{planet}.wav"
+        })
+        current_time += night_length
+
+    return hours
+
+
+@app.route("/")
+def index():
+    hours = calculate_planetary_hours()
+    return render_template("index.html", hours=hours)
+
+
+@app.route("/api/hours")
+def api_hours():
+    return jsonify(calculate_planetary_hours())
+
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 8080)))
