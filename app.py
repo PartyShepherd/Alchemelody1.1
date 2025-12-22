@@ -1,96 +1,66 @@
-from flask import Flask, render_template, request, jsonify
-from datetime import datetime, timedelta
-import json
 import os
+import json
 import requests
+from datetime import datetime, timedelta
+from flask import Flask, render_template, jsonify
 
 app = Flask(__name__)
 
-# Planet colors
-colors = {
-    "Sun": "orange",
-    "Mars": "red",
-    "Venus": "green",
-    "Jupiter": "purple",
-    "Moon": "blue",
-    "Mercury": "yellow",
-    "Saturn": "indigo"
-}
+LOCATION_FILE = "location.json"
 
-# Planetary order
-planets = ["Sun", "Venus", "Mercury", "Moon", "Saturn", "Jupiter", "Mars"]
 
-# Calculate planetary hours
-def calculate_planetary_hours(latitude, longitude):
+# -----------------------------
+# Location handling
+# -----------------------------
+def load_location():
+    if not os.path.exists(LOCATION_FILE):
+        default_location = {
+            "latitude": 40.4406,
+            "longitude": -79.9959,
+            "name": "Pittsburgh"
+        }
+        with open(LOCATION_FILE, "w") as f:
+            json.dump(default_location, f, indent=2)
+        return default_location
+
+    with open(LOCATION_FILE, "r") as f:
+        return json.load(f)
+
+
+# -----------------------------
+# Planetary hours calculation
+# -----------------------------
+def calculate_planetary_hours(lat, lon):
     api_key = os.getenv("OPENWEATHER_API_KEY")
     if not api_key:
         raise RuntimeError("OPENWEATHER_API_KEY not set")
 
     url = (
         "https://api.openweathermap.org/data/2.5/weather"
-        f"?lat={latitude}&lon={longitude}&appid={api_key}"
+        f"?lat={lat}&lon={lon}&appid={api_key}"
     )
-    data = requests.get(url).json()
+
+    response = requests.get(url, timeout=10)
+    data = response.json()
+
+    # 🔒 HARD VALIDATION (prevents KeyError crashes)
+    if (
+        not isinstance(data, dict)
+        or "sys" not in data
+        or "sunrise" not in data["sys"]
+        or "sunset" not in data["sys"]
+    ):
+        raise RuntimeError(f"Invalid OpenWeather response: {data}")
 
     sunrise = datetime.utcfromtimestamp(data["sys"]["sunrise"])
     sunset = datetime.utcfromtimestamp(data["sys"]["sunset"])
 
-    day_duration = sunset - sunrise
-    night_duration = timedelta(hours=24) - day_duration
+    day_length = (sunset - sunrise).total_seconds()
+    planetary_hour_length = day_length / 12
 
-    day_hour = day_duration / 12
-    night_hour = night_duration / 12
-
-    hours = []
-    current_time = sunrise
-
-    for i in range(12):
-        hours.append((current_time.strftime("%H:%M"), planets[i % 7]))
-        current_time += day_hour
-
-    for i in range(12):
-        hours.append((current_time.strftime("%H:%M"), planets[(i + 12) % 7]))
-        current_time += night_hour
-
-    return hours
-
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    location_file = "location.json"
-
-    if os.path.exists(location_file):
-        with open(location_file, "r") as f:
-            location = json.load(f)
-    else:
-        location = {"latitude": 40.4406, "longitude": -79.9959}
-
-    if request.method == "POST":
-        location = {
-            "latitude": float(request.form["latitude"]),
-            "longitude": float(request.form["longitude"]),
-        }
-        with open(location_file, "w") as f:
-            json.dump(location, f)
-
-    hours = calculate_planetary_hours(
-        location["latitude"], location["longitude"]
-    )
-
-    return render_template(
-        "index.html",
-        hours=hours,
-        colors=colors,
-        location=location,
-    )
-
-
-@app.route("/play", methods=["POST"])
-def play_sound():
-    data = request.get_json()
-    planet = data.get("planet")
-    return jsonify({"message": f"Playing sound for {planet}"})
-
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001)
+    planets = [
+        "Saturn",
+        "Jupiter",
+        "Mars",
+        "Sun",
+        "Venus",
