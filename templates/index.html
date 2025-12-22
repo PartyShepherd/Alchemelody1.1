@@ -95,11 +95,13 @@
             z-index: 1000;
             display: none;
         }
-        #consent {
-            margin: 10px;
-            padding: 8px 12px;
+        #consentButton {
+            margin: 20px;
+            padding: 10px 15px;
             font-size: 1rem;
             border-radius: 5px;
+            font-family: 'Playfair Display', serif;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -118,16 +120,16 @@
         <button type="submit">Set Location</button>
     </form>
 
-    <!-- Consent Button -->
+    <!-- Consent button to allow background alarm -->
     <div>
-        <button id="consent">Enable Background Alarm</button>
+        <button id="consentButton" onclick="enableAlarms()">Enable Alarm Sounds in Background</button>
     </div>
 
     <div id="flash"></div>
     <ul>
         {% for time, planet in hours %}
         <li class="hour-entry">
-            <span class="planet-time {{ planet }}">{{ time }} - {{ planet }}</span>
+            <span class="planet-time {{ planet }}">{{ time }}</span>
             <button 
                 class="{{ planet }}" 
                 onclick="playSound('{{ planet }}', '{{ colors[planet] }}')">
@@ -138,66 +140,70 @@
     </ul>
 
     <script>
-        // Consent button
-        let consentButton = document.getElementById("consent");
-        consentButton.style.display = "block";
+        let alarmsEnabled = false;
 
-        consentButton.addEventListener("click", () => {
-            localStorage.setItem("alarmConsent", "true");
-            consentButton.style.display = "none";
-            alert("Background alarms enabled. Keep this tab open.");
-        });
-
-        if(localStorage.getItem("alarmConsent") === "true") {
-            consentButton.style.display = "none";
+        function enableAlarms() {
+            alarmsEnabled = true;
+            document.getElementById("consentButton").style.display = "none";
         }
 
-        // Flashing colors
-        function flashColor(color){
+        function flashColor(color) {
             const flashDiv = document.getElementById("flash");
             flashDiv.style.backgroundColor = color;
             flashDiv.style.display = "block";
-            setTimeout(()=>{ flashDiv.style.display = "none"; },500);
+            setTimeout(() => {
+                flashDiv.style.display = "none";
+            }, 500);
         }
 
-        // Play sound
-        function playSound(planet, color){
-            const audio = new Audio(`/static/sounds/${planet}.wav`);
-            audio.play().catch(e=>console.warn("Playback failed", e));
+        function playSound(planet, color) {
             flashColor(color);
 
-            fetch("/play", {
-                method:"POST",
-                headers:{"Content-Type":"application/json"},
-                body:JSON.stringify({planet})
-            })
-            .then(res=>res.json())
-            .then(data=>console.log(data.message))
-            .catch(e=>console.error(e));
-        }
+            const soundUrl = `/static/sounds/${planet}.wav`;
+            const audio = new Audio(soundUrl);
 
-        // Check planetary hours and play sound if alarm consent given
-        function checkPlanetaryHours(){
-            if(localStorage.getItem("alarmConsent") !== "true") return;
-            const now = new Date();
-            document.querySelectorAll(".hour-entry").forEach(entry=>{
-                const text = entry.querySelector("span").textContent;
-                const [timeText, planet] = text.split(" - ");
-                const color = {{ colors|tojson }}[planet];
-                let [hour, minutePart] = timeText.split(":");
-                let minute = parseInt(minutePart);
-                if(minutePart.includes("PM") && hour != "12") hour = parseInt(hour)+12;
-                if(minutePart.includes("AM") && hour=="12") hour = 0;
-                const nowHour = now.getHours();
-                const nowMinute = now.getMinutes();
-                if(parseInt(hour)==nowHour && minute==nowMinute){
-                    playSound(planet, color);
-                }
+            audio.onerror = function () {
+                console.error(`Failed to load audio for ${planet} at ${soundUrl}`);
+                alert("Unable to play audio. Check the file format or URL.");
+            };
+
+            audio.play().catch((error) => {
+                console.error("Error playing audio:", error);
+                alert("Playback failed. Ensure browser permissions allow audio.");
             });
+
+            fetch("/play", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ planet }),
+            })
+            .then(response => response.json())
+            .then(data => console.log(data.message))
+            .catch(error => console.error("Error:", error));
         }
 
-        // Check every 30 seconds
-        setInterval(checkPlanetaryHours,30000);
+        // Automatic planetary alarm trigger
+        function checkPlanetaryHours() {
+            if (!alarmsEnabled) return;
+
+            const now = new Date();
+            const currentTime = now.getHours() * 60 + now.getMinutes();
+
+            {% for time, planet in hours %}
+                const parts = "{{ time }}".split(/[: ]/);
+                let hour = parseInt(parts[0]);
+                const minute = parseInt(parts[1]);
+                const ampm = parts[2];
+                if (ampm === "PM" && hour !== 12) hour += 12;
+                if (ampm === "AM" && hour === 12) hour = 0;
+
+                if (currentTime === hour * 60 + minute) {
+                    playSound("{{ planet }}", "{{ colors[planet] }}");
+                }
+            {% endfor %}
+        }
+
+        setInterval(checkPlanetaryHours, 60000); // check every minute
     </script>
 </body>
 </html>
