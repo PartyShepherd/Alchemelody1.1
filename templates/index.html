@@ -2,168 +2,126 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alchemelody</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
     <style>
         body {
+            background: black;
+            color: white;
             font-family: Arial, sans-serif;
             text-align: center;
-            background-color: black;
-            color: white;
-        }
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 20px 0;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 2rem;
-            font-family: "Fontdiner Swanky", serif;
-        }
-        .header img {
-            width: 50px;
-            height: auto;
-            margin-left: 10px;
-        }
-        .subheading {
-            font-family: 'Playfair Display', serif;
-            font-size: 1.2rem;
-            margin-top: 5px;
-            margin-bottom: 10px;
-            font-style: italic;
-        }
-        form {
-            margin-top: 10px;
-            display: inline-block;
-            text-align: center;
-        }
-        input {
-            padding: 5px;
-            font-size: 0.9rem;
-            width: 100px;
-            margin: 5px;
-        }
-        .input-label {
-            display: inline-block;
-            margin: 5px;
-            font-size: 0.9rem;
         }
         button {
-            padding: 5px 10px;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            color: black;
-            font-family: 'Playfair Display', serif;
+            padding: 8px 14px;
+            margin: 6px;
             font-weight: bold;
-            border-radius: 5px;
-        }
-        button.Sun { background-color: orange; }
-        button.Mars { background-color: red; }
-        button.Venus { background-color: green; }
-        button.Jupiter { background-color: purple; }
-        button.Moon { background-color: blue; }
-        button.Mercury { background-color: yellow; }
-        button.Saturn { background-color: indigo; }
-        .hour-entry {
-            margin: 10px;
-            padding: 10px;
-            text-align: center;
-        }
-        .planet-time {
-            color: white;
-            font-family: "Fontdiner Swanky", serif;
+            cursor: pointer;
         }
         #flash {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1000;
+            inset: 0;
             display: none;
+            z-index: 999;
+        }
+        .hour-entry {
+            margin: 10px 0;
         }
     </style>
 </head>
+
 <body>
-    <div class="header">
-        <h1>Alchemelody</h1>
-        <img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
-    </div>
-    <p class="subheading">Official App of the band: The Source of All</p>
 
-    <form method="POST">
-        <label class="input-label" for="latitude">Latitude:</label>
-        <input type="text" name="latitude" id="latitude" placeholder="Enter Latitude" value="{{ location.latitude }}" required>
-        <label class="input-label" for="longitude">Longitude:</label>
-        <input type="text" name="longitude" id="longitude" placeholder="Enter Longitude" value="{{ location.longitude }}" required>
-        <button type="submit">Set Location</button>
-    </form>
+<h1>Alchemelody</h1>
+<p>Planetary Hours Alarm</p>
 
-    <div id="flash"></div>
-    <ul>
-        {% for time, planet in hours %}
-        <li class="hour-entry">
-            <span class="planet-time {{ planet }}">{{ time }}</span>
-            <button 
-                class="{{ planet }}" 
-                onclick="playSound('{{ planet }}', '{{ colors[planet] }}')">
-                Play {{ planet }}
-            </button>
-        </li>
-        {% endfor %}
-    </ul>
+<button onclick="enableAlarms()">Enable Planetary Alarms</button>
+<p id="alarm-status">Alarms inactive</p>
 
-    <script>
-        function flashColor(color) {
-            const flashDiv = document.getElementById("flash");
-            flashDiv.style.backgroundColor = color;
-            flashDiv.style.display = "block";
-            setTimeout(() => {
-                flashDiv.style.display = "none";
-            }, 500);
-        }
+<form method="POST">
+    <input name="latitude" value="{{ location.latitude }}" required>
+    <input name="longitude" value="{{ location.longitude }}" required>
+    <button type="submit">Set Location</button>
+</form>
 
-        function playSound(planet, color) {
-            // Flash the corresponding color
-            flashColor(color);
+<div id="flash"></div>
 
-            // Browser playback
-            const soundUrl = `/static/sounds/${planet}.wav`;
-            const audio = new Audio(soundUrl);
+<ul>
+{% for time, planet in hours %}
+    <li class="hour-entry" data-planet="{{ planet }}" data-time="{{ time }}">
+        {{ time }} —
+        <button onclick="playSound('{{ planet }}')">
+            Play {{ planet }}
+        </button>
+    </li>
+{% endfor %}
+</ul>
 
-            audio.onerror = function () {
-                console.error(`Failed to load audio for ${planet} at ${soundUrl}`);
-                alert("Unable to play audio. Check the file format or URL.");
-            };
+<script>
+const colors = {{ colors | tojson }};
+let audioUnlocked = false;
+let lastPlanet = null;
 
-            audio.play().catch((error) => {
-                console.error("Error playing audio:", error);
-                alert("Playback failed. Ensure browser permissions allow audio.");
-            });
+// Flash screen
+function flashColor(color) {
+    const f = document.getElementById("flash");
+    f.style.backgroundColor = color;
+    f.style.display = "block";
+    setTimeout(() => f.style.display = "none", 400);
+}
 
-            // Server-side playback for debugging
-            fetch("/play", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ planet }),
-            })
-            .then(response => response.json())
-            .then(data => console.log(data.message))
-            .catch(error => console.error("Error:", error));
-        }
-    </script>
+// Manual play (unchanged)
+function playSound(planet) {
+    const audio = new Audio(`/static/sounds/${planet}.wav`);
+    audio.play().catch(console.error);
+    flashColor(colors[planet]);
+}
+
+// Unlock audio + start alarms
+function enableAlarms() {
+    const a = new Audio(`/static/sounds/Sun.wav`);
+    a.volume = 0;
+    a.play().then(() => {
+        audioUnlocked = true;
+        document.getElementById("alarm-status").innerText = "Alarms enabled";
+        startScheduler();
+    }).catch(() => alert("Tap again to enable audio"));
+}
+
+// Determine current planetary hour
+function getCurrentPlanet() {
+    const now = new Date();
+    const entries = document.querySelectorAll(".hour-entry");
+
+    let current = null;
+
+    entries.forEach(e => {
+        const [h, m] = e.dataset.time.split(":").map(Number);
+        const t = new Date();
+        t.setHours(h, m, 0, 0);
+        if (now >= t) current = e.dataset.planet;
+    });
+
+    return current;
+}
+
+// Auto-trigger once per hour
+function startScheduler() {
+    setInterval(() => {
+        if (!audioUnlocked) return;
+
+        const planet = getCurrentPlanet();
+        if (!planet || planet === lastPlanet) return;
+
+        lastPlanet = planet;
+        const audio = new Audio(`/static/sounds/${planet}.wav`);
+        audio.play().catch(console.error);
+        flashColor(colors[planet]);
+    }, 30000);
+}
+</script>
+
 </body>
 </html>
