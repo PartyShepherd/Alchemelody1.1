@@ -4,11 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alchemelody</title>
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -19,25 +24,25 @@
         .header {
             display: flex;
             align-items: center;
-            justify-content: center; /* Center the header elements */
+            justify-content: center;
             margin: 20px 0;
         }
         .header h1 {
             margin: 0;
             font-size: 2rem;
-            font-family: "Fontdiner Swanky", serif; /* Apply Fontdiner Swanky to the title */
+            font-family: "Fontdiner Swanky", serif;
         }
         .header img {
             width: 50px;
             height: auto;
-            margin-left: 10px; /* Space between text and image */
+            margin-left: 10px;
         }
         .subheading {
-            font-family: 'Playfair Display', serif; /* Match the subheading font */
+            font-family: 'Playfair Display', serif;
             font-size: 1.2rem;
             margin-top: 5px;
             margin-bottom: 10px;
-            font-style: italic; /* Set subheading back to italics */
+            font-style: italic;
         }
         form {
             margin-top: 10px;
@@ -47,7 +52,7 @@
         input {
             padding: 5px;
             font-size: 0.9rem;
-            width: 100px; /* Smaller width for input boxes */
+            width: 100px;
             margin: 5px;
         }
         .input-label {
@@ -60,41 +65,26 @@
             font-size: 1rem;
             cursor: pointer;
             border: none;
-            color: black; /* Black button text */
+            color: black;
             font-family: 'Playfair Display', serif;
             font-weight: bold;
-            font-style: normal; /* No italics */
             border-radius: 5px;
         }
-        button.Sun {
-            background-color: orange;
-        }
-        button.Mars {
-            background-color: red;
-        }
-        button.Venus {
-            background-color: green;
-        }
-        button.Jupiter {
-            background-color: purple;
-        }
-        button.Moon {
-            background-color: blue;
-        }
-        button.Mercury {
-            background-color: yellow;
-        }
-        button.Saturn {
-            background-color: indigo;
-        }
+        button.Sun { background-color: orange; }
+        button.Mars { background-color: red; }
+        button.Venus { background-color: green; }
+        button.Jupiter { background-color: purple; }
+        button.Moon { background-color: blue; }
+        button.Mercury { background-color: yellow; }
+        button.Saturn { background-color: indigo; }
         .hour-entry {
             margin: 10px;
             padding: 10px;
-            text-align: center; /* Center align the time and button */
+            text-align: center;
         }
         .planet-time {
-            color: white; /* White text for planetary times */
-            font-family: "Fontdiner Swanky", serif; /* Restored to Fontdiner Swanky font */
+            color: white;
+            font-family: "Fontdiner Swanky", serif;
         }
         #flash {
             position: fixed;
@@ -143,7 +133,7 @@
             flashDiv.style.display = "block";
             setTimeout(() => {
                 flashDiv.style.display = "none";
-            }, 500); // Flash duration
+            }, 500);
         }
 
         function playSound(planet, color) {
@@ -167,9 +157,7 @@
             // Server-side playback for debugging
             fetch("/play", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ planet }),
             })
             .then(response => response.json())
