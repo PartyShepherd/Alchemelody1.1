@@ -52,20 +52,17 @@
     <button type="submit">Set Location</button>
 </form>
 
-<!-- Consent button -->
 <div>
     <button id="consentButton" onclick="enableAlarms()">Enable Alarm Sounds in Background</button>
 </div>
 
 <div id="flash"></div>
 <ul>
-    {% for time, planet in hours %}
+    {% for entry in hours %}
     <li class="hour-entry">
-        <span class="planet-time {{ planet }}">{{ time }}</span>
-        <button 
-            class="{{ planet }}" 
-            onclick="playSound('{{ planet }}', '{{ colors[planet] }}')">
-            Play {{ planet }}
+        <span class="planet-time {{ entry.planet }}">{{ entry.time_str }}</span>
+        <button class="{{ entry.planet }}" onclick="playSound('{{ entry.planet }}', '{{ colors[entry.planet] }}')">
+            Play {{ entry.planet }}
         </button>
     </li>
     {% endfor %}
@@ -74,10 +71,10 @@
 <script>
 let alarmsEnabled = false;
 
-// Convert planetary hours from template to JS array
+// Precomputed planetary hours from Flask
 const planetaryHours = [
-    {% for time, planet in hours %}
-    {time: "{{ time }}", planet: "{{ planet }}", color: "{{ colors[planet] }}"},
+    {% for entry in hours %}
+    {hour: {{ entry.hour }}, minute: {{ entry.minute }}, planet: "{{ entry.planet }}", color: "{{ colors[entry.planet] }}" },
     {% endfor %}
 ];
 
@@ -111,7 +108,7 @@ function playSound(planet, color) {
     .catch(err => console.error(err));
 }
 
-// Automatic alarms
+// Automatic alarms every minute
 function checkPlanetaryHours() {
     if (!alarmsEnabled) return;
 
@@ -119,13 +116,8 @@ function checkPlanetaryHours() {
     const currentMinutes = now.getHours() * 60 + now.getMinutes();
 
     planetaryHours.forEach(entry => {
-        const [hourStr, minuteStr, ampm] = entry.time.split(/[: ]/);
-        let hour = parseInt(hourStr);
-        const minute = parseInt(minuteStr);
-        if (ampm === "PM" && hour !== 12) hour += 12;
-        if (ampm === "AM" && hour === 12) hour = 0;
-
-        if (currentMinutes === hour * 60 + minute) {
+        const entryMinutes = entry.hour * 60 + entry.minute;
+        if (Math.abs(currentMinutes - entryMinutes) <= 1) {
             playSound(entry.planet, entry.color);
         }
     });
