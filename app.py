@@ -1,95 +1,74 @@
 import os
+from flask import Flask, render_template, request, jsonify
+from datetime import datetime, timedelta
 import json
 import requests
-from datetime import datetime, timedelta, timezone
-from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
 
-colors = {
-    "Sun": "orange",
-    "Mars": "red",
-    "Venus": "green",
-    "Jupiter": "purple",
-    "Moon": "blue",
-    "Mercury": "yellow",
-    "Saturn": "indigo",
-}
+# Planetary hour colors
+colors = {"Sun":"orange","Mars":"red","Venus":"green","Jupiter":"purple","Moon":"blue","Mercury":"yellow","Saturn":"indigo"}
+planets = ["Sun","Venus","Mercury","Moon","Saturn","Jupiter","Mars"]
 
-planets = ["Sun", "Venus", "Mercury", "Moon", "Saturn", "Jupiter", "Mars"]
-
-
-def load_location():
-    try:
-        with open("location.json", "r") as f:
-            return json.load(f)
-    except FileNotFoundError:
-        return {"latitude": 40.4406, "longitude": -79.9959}  # Pittsburgh
-
-
-def calculate_planetary_hours(lat, lon):
+def calculate_planetary_hours(latitude, longitude):
     api_key = os.environ.get("API_KEY")
     if not api_key:
-        raise RuntimeError("API_KEY not set")
+        raise ValueError("API_KEY environment variable not set")
 
-    url = (
-        f"https://api.openweathermap.org/data/2.5/weather"
-        f"?lat={lat}&lon={lon}&appid={api_key}"
-    )
+    url = f"http://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={api_key}"
     data = requests.get(url).json()
 
-    tz_offset = data["timezone"]  # seconds
-    tz = timezone(timedelta(seconds=tz_offset))
-
-    sunrise = datetime.fromtimestamp(data["sys"]["sunrise"], tz)
-    sunset = datetime.fromtimestamp(data["sys"]["sunset"], tz)
-
-    day_len = (sunset - sunrise) / 12
-    night_len = (timedelta(hours=24) - (sunset - sunrise)) / 12
+    sunrise = datetime.utcfromtimestamp(data["sys"]["sunrise"])
+    sunset = datetime.utcfromtimestamp(data["sys"]["sunset"])
+    day_duration = sunset - sunrise
+    day_hour = day_duration / 12
+    night_duration = timedelta(hours=24) - day_duration
+    night_hour = night_duration / 12
 
     hours = []
-    t = sunrise
+    current_time = sunrise
 
+    # Daytime hours
     for i in range(12):
-        hours.append({
-            "start": t.isoformat(),
-            "planet": planets[i % 7]
-        })
-        t += day_len
+        hours.append((current_time.strftime("%I:%M %p"), planets[i % 7]))
+        current_time += day_hour
 
+    # Nighttime hours
     for i in range(12):
-        hours.append({
-            "start": t.isoformat(),
-            "planet": planets[(i + 12) % 7]
-        })
-        t += night_len
+        hours.append((current_time.strftime("%I:%M %p"), planets[(i + 12) % 7]))
+        current_time += night_hour
 
     return hours
 
-
-@app.route("/")
+@app.route("/", methods=["GET","POST"])
 def index():
-    location = load_location()
+    # Load location.json if exists, else default
+    try:
+        with open("location.json","r") as f:
+            location = json.load(f)
+    except FileNotFoundError:
+        location = {"latitude":40.4406,"longitude":-79.9959}  # Pittsburgh default
+
+    if request.method == "POST":
+        lat = request.form.get("latitude")
+        lon = request.form.get("longitude")
+        if lat and lon:
+            location = {"latitude":float(lat),"longitude":float(lon)}
+            with open("location.json","w") as f:
+                json.dump(location,f)
+
     hours = calculate_planetary_hours(location["latitude"], location["longitude"])
-    return render_template(
-        "index.html",
-        hours=hours,
-        colors=colors,
-        location=location
-    )
+    return render_template("index.html", hours=hours, colors=colors, location=location)
 
+@app.route("/play", methods=["POST"])
+def play_sound():
+    data = request.get_json()
+    planet = data.get("planet")
+    if not planet:
+        return jsonify({"message":"No planet provided"}),400
+    print(f"Playing sound for {planet}")
+    return jsonify({"message":f"Playing sound for {planet}"}),200
 
-@app.route("/current_hour")
-def current_hour():
-    location = load_location()
-    hours = calculate_planetary_hours(location["latitude"], location["longitude"])
-
-    now = datetime.now(timezone.utc)
-    active = hours[-1]
-
-    for h in hours:
-        start = datetime.fromisoformat(h["start"])
-        if now >= start:
-            active = h
-
-    return jsonify(active)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT",5001))
+    app.run(host="0.0.0.0", port=port)
