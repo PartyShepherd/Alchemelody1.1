@@ -1,86 +1,35 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Alchemelody</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alchemelody</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display&display=swap" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
 
-<link rel="icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
-<style>
-/* YOUR EXISTING CSS — UNCHANGED */
-</style>
-</head>
-
-<body>
-<h1>Alchemelody</h1>
-
-<button id="enable">Enable Alarms</button>
-
-<ul>
-{% for h in hours %}
-<li>
-{{ h.start }} — {{ h.planet }}
-<button class="{{ h.planet }}"
-onclick="manualPlay('{{ h.planet }}', '{{ colors[h.planet] }}')">
-Play {{ h.planet }}
-</button>
-</li>
-{% endfor %}
-</ul>
-
-<div id="flash" style="display:none; position:fixed; inset:0;"></div>
-
-<script>
-let enabled = false
-let lastPlanet = null
-
-document.getElementById("enable").onclick = async () => {
-    enabled = true
-    await Notification.requestPermission()
-    alert("Alarms enabled")
-}
-
-function flash(color) {
-    const f = document.getElementById("flash")
-    f.style.background = color
-    f.style.display = "block"
-    setTimeout(() => f.style.display = "none", 500)
-}
-
-function play(planet, color) {
-    flash(color)
-    new Audio(`/static/sounds/${planet}.wav`).play()
-
-    if (Notification.permission === "granted") {
-        new Notification(planet + " Hour", {
-            body: planet,
-            icon: "/static/images/favicon.ico"
-        })
-    }
-}
-
-function manualPlay(p, c) {
-    play(p, c)
-}
-
-async function checkHour() {
-    if (!enabled) return
-
-    const res = await fetch("/current_hour")
-    const data = await res.json()
-
-    if (data.planet !== lastPlanet) {
-        lastPlanet = data.planet
-        play(data.planet, "{{ colors['Sun'] }}")
-    }
-}
-
-setInterval(checkHour, 60000)
-</script>
-</body>
-</html>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: black;
+            color: white;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-family: "Fontdiner Swanky", serif;
+        }
+        .
