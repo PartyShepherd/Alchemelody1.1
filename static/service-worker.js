@@ -1,31 +1,31 @@
-self.addEventListener('install', event => {
-    self.skipWaiting();
-    console.log("Service Worker installed");
+self.addEventListener('install', event => self.skipWaiting());
+
+self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+
+self.addEventListener('message', event => {
+  const planet = event.data.planet;
+  const soundUrl = `/static/sounds/${planet}.wav`;
+  const colorEmoji = {
+    "Sun":"🟧","Mars":"🟥","Venus":"🟩",
+    "Jupiter":"🟪","Moon":"🟦","Mercury":"🟨","Saturn":"🟦"
+  }[planet] || "🔔";
+
+  // Show notification
+  self.registration.showNotification(`Planetary Hour: ${planet}`, {
+    body: `Time for ${planet}`,
+    icon: '/static/images/favicon.ico'
+  });
+
+  // Play sound (works in Android PWA)
+  event.waitUntil(
+    fetch(soundUrl).then(r => r.arrayBuffer()).then(buf => {
+      const ac = new AudioContext();
+      ac.decodeAudioData(buf, decoded => {
+        const src = ac.createBufferSource();
+        src.buffer = decoded;
+        src.connect(ac.destination);
+        src.start();
+      });
+    })
+  );
 });
-
-self.addEventListener('activate', event => {
-    console.log("Service Worker activated");
-});
-
-function playPlanetAlarm(planet, color) {
-    self.registration.showNotification("Planetary Hour", {
-        body: `It's now ${planet}'s hour!`,
-        icon: `/static/images/${planet}.png`,
-        badge: `/static/images/${planet}.png`,
-        vibrate: [200, 100, 200],
-        tag: planet
-    });
-}
-
-self.addEventListener('periodicsync', event => {
-    if (event.tag === 'check-hour') {
-        event.waitUntil(checkNextHour());
-    }
-});
-
-// Fallback: use setInterval in SW for testing
-setInterval(async () => {
-    const response = await fetch('/');
-    const text = await response.text();
-    // Here you could parse HTML for hours and trigger playPlanetAlarm
-}, 60000);
