@@ -11,112 +11,44 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
 
 <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+<link rel="manifest" href="/manifest.json">
 
 <style>
-body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: black;
-    color: white;
-}
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 20px 0;
-}
-.header h1 {
-    margin: 0;
-    font-size: 2rem;
-    font-family: "Fontdiner Swanky", serif;
-}
-.header img {
-    width: 50px;
-    height: auto;
-    margin-left: 10px;
-}
-.subheading {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.2rem;
-    margin-top: 5px;
-    margin-bottom: 10px;
-    font-style: italic;
-}
-form {
-    margin-top: 10px;
-    display: inline-block;
-    text-align: center;
-}
-input {
-    padding: 5px;
-    font-size: 0.9rem;
-    width: 100px;
-    margin: 5px;
-}
-.input-label {
-    display: inline-block;
-    margin: 5px;
-    font-size: 0.9rem;
-}
-button {
-    padding: 5px 10px;
-    font-size: 1rem;
-    cursor: pointer;
-    border: none;
-    color: black;
-    font-family: 'Playfair Display', serif;
-    font-weight: bold;
-    border-radius: 5px;
-}
-button.Sun { background-color: orange; }
-button.Mars { background-color: red; }
-button.Venus { background-color: green; }
-button.Jupiter { background-color: purple; }
-button.Moon { background-color: blue; }
-button.Mercury { background-color: yellow; }
-button.Saturn { background-color: indigo; }
-.hour-entry {
-    margin: 10px;
-    padding: 10px;
-    text-align: center;
-}
-.planet-time {
-    color: white;
-    font-family: "Fontdiner Swanky", serif;
-}
-#flash {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 1000;
-    display: none;
-}
-#consentButton {
-    margin: 10px;
-    padding: 10px 20px;
-    font-size: 1rem;
-    border-radius: 5px;
-    font-family: 'Playfair Display', serif;
-    font-weight: bold;
-    cursor: pointer;
-}
+body { font-family: Arial, sans-serif; text-align:center; background-color:black; color:white; }
+.header { display:flex; align-items:center; justify-content:center; margin:20px 0; }
+.header h1 { margin:0; font-size:2rem; font-family:"Fontdiner Swanky", serif; }
+.header img { width:50px; height:auto; margin-left:10px; }
+.subheading { font-family:'Playfair Display', serif; font-size:1.2rem; margin:5px 0 10px 0; font-style:italic; }
+form { margin-top:10px; display:inline-block; text-align:center; }
+input { padding:5px; font-size:0.9rem; width:100px; margin:5px; }
+.input-label { display:inline-block; margin:5px; font-size:0.9rem; }
+button { padding:5px 10px; font-size:1rem; cursor:pointer; border:none; color:black; font-family:'Playfair Display', serif; font-weight:bold; border-radius:5px; }
+button.Sun { background-color:orange; }
+button.Mars { background-color:red; }
+button.Venus { background-color:green; }
+button.Jupiter { background-color:purple; }
+button.Moon { background-color:blue; }
+button.Mercury { background-color:yellow; }
+button.Saturn { background-color:indigo; }
+.hour-entry { margin:10px; padding:10px; text-align:center; }
+.planet-time { color:white; font-family:"Fontdiner Swanky", serif; }
+#flash { position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000; display:none; }
+#consentButton { margin:10px; padding:10px 20px; font-size:1rem; border-radius:5px; font-family:'Playfair Display', serif; font-weight:bold; cursor:pointer; }
 </style>
 </head>
 <body>
 <div class="header">
-    <h1>Alchemelody</h1>
-    <img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
+<h1>Alchemelody</h1>
+<img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
 </div>
 <p class="subheading">Official App of the band: The Source of All</p>
 
 <form method="POST">
-    <label class="input-label" for="latitude">Latitude:</label>
-    <input type="text" name="latitude" id="latitude" placeholder="Enter Latitude" value="{{ location.latitude }}" required>
-    <label class="input-label" for="longitude">Longitude:</label>
-    <input type="text" name="longitude" id="longitude" placeholder="Enter Longitude" value="{{ location.longitude }}" required>
-    <button type="submit">Set Location</button>
+<label class="input-label" for="latitude">Latitude:</label>
+<input type="text" name="latitude" id="latitude" placeholder="Enter Latitude" value="{{ location.latitude }}" required>
+<label class="input-label" for="longitude">Longitude:</label>
+<input type="text" name="longitude" id="longitude" placeholder="Enter Longitude" value="{{ location.longitude }}" required>
+<button type="submit">Set Location</button>
 </form>
 
 <button id="consentButton" onclick="requestConsent()">Allow Background Alarms</button>
@@ -139,15 +71,19 @@ let consentGiven = false;
 function requestConsent() {
     consentGiven = true;
     document.getElementById("consentButton").style.display = "none";
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log("Service Worker registered"))
+        .catch(err => console.error("SW registration failed:", err));
+    }
 }
 
 function flashColor(color) {
     const flashDiv = document.getElementById("flash");
     flashDiv.style.backgroundColor = color;
     flashDiv.style.display = "block";
-    setTimeout(() => {
-        flashDiv.style.display = "none";
-    }, 500);
+    setTimeout(() => { flashDiv.style.display = "none"; }, 500);
 }
 
 function playSound(planet, color) {
@@ -155,7 +91,6 @@ function playSound(planet, color) {
     const audio = new Audio(`/static/sounds/${planet}.wav`);
     audio.play().catch(err => console.error("Playback error:", err));
 
-    // Optional server-side logging
     fetch("/play", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -165,20 +100,6 @@ function playSound(planet, color) {
     .then(data => console.log(data.message))
     .catch(err => console.error(err));
 }
-
-// Check alarms every minute
-function checkAlarm() {
-    if (!consentGiven) return;
-    const now = new Date();
-    const currentTimeStr = now.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    {% for time, planet in hours %}
-        if (currentTimeStr === "{{ time[:-3] }}") {
-            playSound("{{ planet }}", "{{ colors[planet] }}");
-        }
-    {% endfor %}
-}
-
-setInterval(checkAlarm, 60000); // every 60 seconds
 </script>
 </body>
 </html>
