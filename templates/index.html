@@ -34,4 +34,105 @@
     .hour-entry { margin: 10px; padding: 10px; text-align: center; }
     .planet-time { color: white; font-family: "Fontdiner Swanky", serif; }
     #flash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: none; }
-    #consentButton { margin: 20px; padding: 10px 15px; font-size: 1rem; bo
+    #consentButton { margin: 20px; padding: 10px 15px; font-size: 1rem; border-radius: 5px; font-family: 'Playfair Display', serif; font-weight: bold; }
+</style>
+</head>
+<body>
+<div class="header">
+    <h1>Alchemelody</h1>
+    <img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
+</div>
+<p class="subheading">Official App of the band: The Source of All</p>
+
+<form method="POST">
+    <label class="input-label" for="latitude">Latitude:</label>
+    <input type="text" name="latitude" id="latitude" placeholder="Enter Latitude" value="{{ location.latitude }}" required>
+    <label class="input-label" for="longitude">Longitude:</label>
+    <input type="text" name="longitude" id="longitude" placeholder="Enter Longitude" value="{{ location.longitude }}" required>
+    <button type="submit">Set Location</button>
+</form>
+
+<div>
+    <button id="consentButton" onclick="enableAlarms()">Enable Alarm Sounds in Background</button>
+</div>
+
+<div id="flash"></div>
+<ul>
+    {% for entry in hours %}
+    <li class="hour-entry">
+        <span class="planet-time {{ entry.planet }}">{{ entry.time_str }}</span>
+        <button class="{{ entry.planet }}" onclick="playSound('{{ entry.planet }}', '{{ colors[entry.planet] }}')">
+            Play {{ entry.planet }}
+        </button>
+    </li>
+    {% endfor %}
+</ul>
+
+<script>
+let alarmsEnabled = false;
+let triggeredHours = new Set(); // track alarms that have already fired
+
+// Precomputed planetary hours from Flask
+const planetaryHours = [
+    {% for entry in hours %}
+    {hour: {{ entry.hour }}, minute: {{ entry.minute }}, planet: "{{ entry.planet }}", color: "{{ colors[entry.planet] }}" },
+    {% endfor %}
+];
+
+function enableAlarms() {
+    alarmsEnabled = true;
+    document.getElementById("consentButton").style.display = "none";
+}
+
+function flashColor(color) {
+    const flashDiv = document.getElementById("flash");
+    flashDiv.style.backgroundColor = color;
+    flashDiv.style.display = "block";
+    setTimeout(() => { flashDiv.style.display = "none"; }, 500);
+}
+
+function playSound(planet, color) {
+    flashColor(color);
+    const audio = new Audio(`/static/sounds/${planet}.wav`);
+    audio.onerror = function () {
+        console.error(`Failed to load audio for ${planet}`);
+    };
+    audio.play().catch(error => console.error("Playback error:", error));
+
+    fetch("/play", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planet }),
+    })
+    .then(res => res.json())
+    .then(data => console.log(data.message))
+    .catch(err => console.error(err));
+}
+
+// Automatic alarms every minute, firing only once per hour
+function checkPlanetaryHours() {
+    if (!alarmsEnabled) return;
+
+    const now = new Date();
+    const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+    planetaryHours.forEach(entry => {
+        const entryMinutes = entry.hour * 60 + entry.minute;
+        const key = `${entry.hour}:${entry.minute}`;
+
+        if (currentMinutes === entryMinutes) {
+            if (!triggeredHours.has(key)) {
+                playSound(entry.planet, entry.color);
+                triggeredHours.add(key);
+            }
+        } else {
+            // Reset after the minute passes, so it can fire next day
+            triggeredHours.delete(key);
+        }
+    });
+}
+
+setInterval(checkPlanetaryHours, 60000); // check every minute
+</script>
+</body>
+</html>
