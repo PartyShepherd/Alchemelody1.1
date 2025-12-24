@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alchemelody Sigil Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; background:#e6e6fa; text-align:center; margin:20px; }
+        input { padding:5px; margin:5px; }
+        button { padding:5px 10px; margin:5px; }
+        img { margin-top:20px; border:2px solid #333; }
+        .nav { margin-top:20px; }
+        .nav a { margin:0 10px; text-decoration:none; font-weight:bold; color:#333; }
+    </style>
+</head>
+<body>
+    <h1>Alchemelody Sigil Generator</h1>
+
+    <form method="POST">
+        <input type="text" name="word" placeholder="Enter Word or Name" required>
+        <button type="submit">Generate Sigil</button>
+    </form>
+
+    {% if sigil_image %}
+        <img src="data:image/png;base64,{{sigil_image}}" alt="Generated Sigil">
+    {% endif %}
+
+    <div class="nav">
+        <a href="/">Back to Alarm</a>
+        <a href="/planner">Go to Planner</a>
+    </div>
+</body>
+</html>

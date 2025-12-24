@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Alchemelody Planner</title>
+    <style>
+        body { font-family: Arial, sans-serif; background:#fff8dc; margin:20px; }
+        h1,h2 { text-align:center; }
+        label { display:block; margin-top:10px; font-weight:bold; }
+        textarea { width:100%; height:60px; }
+        .ritual { margin-bottom:10px; }
+        .nav { margin-top: 20px; text-align:center; }
+        .nav a { margin:0 10px; text-decoration:none; font-weight:bold; color:#333; }
+        button { padding:10px 20px; margin-top:10px; }
+    </style>
+</head>
+<body>
+    <h1>Alchemelody Planner</h1>
+    <h2>{{formatted_date}} - {{formatted_time}}</h2>
+    <p>Day: {{day_of_week}}</p>
+    <p>Elemental Quarter: {{elemental_quarter}}</p>
+    <p>Moon Phase: {{moon_phase}}</p>
+    <p>Weather: {{weather}}</p>
+    <p>Planetary Hour: {{planetary_hour}}</p>
+
+    <form method="POST">
+        <label>Physical Condition:</label>
+        <textarea name="physical_condition"></textarea>
+
+        <label>Meditation Notes:</label>
+        <textarea name="meditation"></textarea>
+
+        <label>Tarot Notes:</label>
+        <textarea name="tarot"></textarea>
+
+        <h3>Rituals</h3>
+        {% for ritual in rituals %}
+            <div class="ritual">
+                <input type="checkbox" name="rituals" value="{{ritual}}"> {{ritual}}
+                <textarea name="note_{{ritual}}" placeholder="Notes for {{ritual}}"></textarea>
+            </div>
+        {% endfor %}
+
+        <button type="submit">Save Log</button>
+    </form>
+
+    <div class="nav">
+        <a href="/">Back to Alarm</a>
+        <a href="/sigils">Go to Sigil Generator</a>
+    </div>
+</body>
+</html>
