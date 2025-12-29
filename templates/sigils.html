@@ -1,66 +1,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Alchemelody Sigil</title>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
-
-<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
-
-<style>
-body { font-family: Arial, sans-serif; text-align: center; background-color: black; color: white; }
-.header { display: flex; align-items: center; justify-content: center; margin: 20px 0; }
-.header h1 { margin: 0; font-size: 2rem; font-family: "Fontdiner Swanky", serif; }
-.header img { width: 50px; height: auto; margin-left: 10px; }
-.subheading { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-top: 5px; margin-bottom: 10px; font-style: italic; }
-.nav { margin: 10px 0; }
-.nav button { margin: 5px; padding: 5px 10px; border-radius: 5px; font-family: 'Playfair Display', serif; font-weight: bold; cursor: pointer; }
-.sigil-container { margin-top: 20px; }
-#sigilCanvas { border: 2px solid white; background-color: black; }
-button.generate-btn { margin-top: 15px; padding: 5px 15px; font-family: 'Playfair Display', serif; font-weight: bold; border-radius: 5px; cursor: pointer; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alchemelody Sigil Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: black; color: white; }
+        h1 { font-family: 'Playfair Display', serif; color: #FFD700; font-size: 2rem; }
+        form { margin: 20px auto; padding: 15px; background: #111; border-radius: 10px; display: inline-block; }
+        input, button { font-size: 1rem; padding: 10px; margin: 10px; border-radius: 5px; }
+        button { cursor: pointer; font-weight: bold; background-color: #007BFF; color: white; border: none; }
+        button:hover { background-color: #0056b3; }
+        .sigil-container { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
+        .sigil-container img { margin-top: 20px; border: 2px solid white; padding: 10px; background: black; border-radius: 10px; }
+    </style>
 </head>
 <body>
 
-<div class="nav">
-    <button onclick="location.href='{{ url_for('index') }}'">Back to Alarm</button>
-    <button onclick="location.href='{{ url_for('planner') }}'">Go to Planner</button>
-</div>
+    <!-- Switch to Alarm -->
+    <form action="{{ url_for('index') }}" method="get">
+        <button type="submit">Go to Alarm</button>
+    </form>
 
-<div class="header">
-    <h1>Sigil Generator</h1>
-    <img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
-</div>
+    <!-- Switch to Planner -->
+    <form action="{{ url_for('planner') }}" method="get">
+        <button type="submit">Go to Planner</button>
+    </form>
+    <hr>
 
-<p class="subheading">Manifest your alchemelodic intent</p>
+    <h1>Seeds of Songs</h1>
+    <form method="POST">
+        <label for="word">Enter a word:</label>
+        <input type="text" id="word" name="word" required>
+        <button type="submit">Generate Sigil</button>
+    </form>
 
-<div class="sigil-container">
-    <canvas id="sigilCanvas" width="400" height="400"></canvas><br>
-    <button class="generate-btn" onclick="generateSigil()">Generate Sigil</button>
-</div>
-
-<script>
-function generateSigil() {
-    const canvas = document.getElementById("sigilCanvas");
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Example sigil: simple random lines
-    for (let i = 0; i < 10; i++) {
-        ctx.strokeStyle = "white";
-        ctx.lineWidth = Math.random() * 3 + 1;
-        ctx.beginPath();
-        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
-        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
-        ctx.stroke();
-    }
-}
-</script>
+    {% if sigil_image %}
+        <div class="sigil-container">
+            <h2>Generated Sigil:</h2>
+            <img src="data:image/png;base64,{{ sigil_image }}" alt="Generated Sigil">
+        </div>
+    {% endif %}
 
 </body>
 </html>
