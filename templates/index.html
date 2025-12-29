@@ -4,42 +4,45 @@
     <meta charset="UTF-8">
     <title>Alchemelody Alarm</title>
     <style>
-        body { font-family: Arial, sans-serif; background:#f5f5f5; text-align:center; }
-        .planet-hour { margin: 10px; padding: 10px; border-radius: 8px; display:inline-block; cursor:pointer; }
-        form { margin-top: 20px; }
-        input { padding: 5px; margin: 5px; }
-        .nav { margin-top: 20px; }
-        .nav a { margin: 0 10px; text-decoration:none; color:#333; font-weight:bold; }
+        body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
+        header { background: #222; padding: 10px; text-align: center; }
+        header h1 { margin: 0; color: #FFD700; }
+        nav { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
+        nav button { padding: 8px 12px; background: #333; color: #fff; border: none; cursor: pointer; border-radius: 5px; }
+        nav button:hover { background: #555; }
+        .planet-hours { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 10px; }
+        .hour-card { background: #222; border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; transition: transform 0.2s; }
+        .hour-card:hover { transform: scale(1.05); }
+        .planet-name { font-weight: bold; font-size: 1.2em; }
+        .time { font-size: 1em; color: #ccc; }
     </style>
-    <script>
-        function playSound(planet) {
-            fetch('/play', {
-                method:'POST',
-                headers: {'Content-Type':'application/json'},
-                body: JSON.stringify({planet:planet})
-            });
-        }
-    </script>
 </head>
 <body>
-    <h1>Alchemelody Alarm / Planetary Hours</h1>
-    <div>
-        {% for hour in hours %}
-            <div class="planet-hour" style="background: {{colors[hour.planet]}}" onclick="playSound('{{hour.planet}}')">
-                {{hour.time_str}} - {{hour.planet}}
-            </div>
-        {% endfor %}
+<header>
+    <h1>Alchemelody Alarm</h1>
+</header>
+<nav>
+    <button onclick="location.href='/planner'">Planner</button>
+    <button onclick="location.href='/sigils'">Sigils</button>
+</nav>
+<div class="planet-hours">
+    {% for hour in hours %}
+    <div class="hour-card" onclick="playSound('{{ hour.planet }}')" style="border:2px solid {{ colors[hour.planet] }}">
+        <div class="planet-name" style="color: {{ colors[hour.planet] }}">{{ hour.planet }}</div>
+        <div class="time">{{ hour.time_str }}</div>
     </div>
+    {% endfor %}
+</div>
 
-    <form method="POST">
-        <input type="text" name="latitude" placeholder="Latitude" value="{{location.latitude}}">
-        <input type="text" name="longitude" placeholder="Longitude" value="{{location.longitude}}">
-        <button type="submit">Update Location</button>
-    </form>
-
-    <div class="nav">
-        <a href="/planner">Go to Planner</a>
-        <a href="/sigils">Go to Sigil Generator</a>
-    </div>
+<script>
+function playSound(planet) {
+    fetch("/play", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({planet: planet})
+    }).then(response => response.json())
+      .then(data => console.log(data.message));
+}
+</script>
 </body>
 </html>

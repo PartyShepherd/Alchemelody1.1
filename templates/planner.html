@@ -4,49 +4,57 @@
     <meta charset="UTF-8">
     <title>Alchemelody Planner</title>
     <style>
-        body { font-family: Arial, sans-serif; background:#fff8dc; margin:20px; }
-        h1,h2 { text-align:center; }
-        label { display:block; margin-top:10px; font-weight:bold; }
-        textarea { width:100%; height:60px; }
-        .ritual { margin-bottom:10px; }
-        .nav { margin-top: 20px; text-align:center; }
-        .nav a { margin:0 10px; text-decoration:none; font-weight:bold; color:#333; }
-        button { padding:10px 20px; margin-top:10px; }
+        body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
+        header { background: #222; padding: 10px; text-align: center; }
+        header h1 { margin: 0; color: #FFD700; }
+        nav { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
+        nav button { padding: 8px 12px; background: #333; color: #fff; border: none; cursor: pointer; border-radius: 5px; }
+        nav button:hover { background: #555; }
+        .planner-container { max-width: 700px; margin: auto; padding: 10px; background: #222; border-radius: 10px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 5px; margin-top: 2px; border-radius: 5px; border: none; }
+        .ritual { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
+        .ritual input[type="checkbox"] { margin-right: 5px; }
+        button.submit-btn { margin-top: 15px; padding: 8px 12px; background: #FFD700; color: #111; border: none; border-radius: 5px; cursor: pointer; }
+        button.submit-btn:hover { background: #FFA500; }
     </style>
 </head>
 <body>
-    <h1>Alchemelody Planner</h1>
-    <h2>{{formatted_date}} - {{formatted_time}}</h2>
-    <p>Day: {{day_of_week}}</p>
-    <p>Elemental Quarter: {{elemental_quarter}}</p>
-    <p>Moon Phase: {{moon_phase}}</p>
-    <p>Weather: {{weather}}</p>
-    <p>Planetary Hour: {{planetary_hour}}</p>
+<header>
+    <h1>Planner</h1>
+</header>
+<nav>
+    <button onclick="location.href='/'">Alarm</button>
+    <button onclick="location.href='/sigils'">Sigils</button>
+</nav>
+<div class="planner-container">
+    <p><strong>Date:</strong> {{ formatted_date }} | <strong>Time:</strong> {{ formatted_time }} | <strong>Day:</strong> {{ day_of_week }}</p>
+    <p><strong>Elemental Quarter:</strong> {{ elemental_quarter }} | <strong>Moon Phase:</strong> {{ moon_phase }}</p>
+    <p><strong>Weather:</strong> {{ weather }} | <strong>Planetary Hour:</strong> {{ planetary_hour }}</p>
 
-    <form method="POST">
-        <label>Physical Condition:</label>
-        <textarea name="physical_condition"></textarea>
+    <form method="post">
+        <label for="physical_condition">Physical Condition:</label>
+        <input type="text" name="physical_condition" id="physical_condition">
 
-        <label>Meditation Notes:</label>
-        <textarea name="meditation"></textarea>
+        <label for="meditation">Meditation Notes:</label>
+        <textarea name="meditation" id="meditation" rows="3"></textarea>
 
-        <label>Tarot Notes:</label>
-        <textarea name="tarot"></textarea>
+        <label for="tarot">Tarot Notes:</label>
+        <textarea name="tarot" id="tarot" rows="3"></textarea>
 
-        <h3>Rituals</h3>
+        <h3>Rituals:</h3>
         {% for ritual in rituals %}
-            <div class="ritual">
-                <input type="checkbox" name="rituals" value="{{ritual}}"> {{ritual}}
-                <textarea name="note_{{ritual}}" placeholder="Notes for {{ritual}}"></textarea>
+        <div class="ritual">
+            <label>{{ ritual }}</label>
+            <div>
+                <input type="checkbox" name="rituals" value="{{ ritual }}">
+                <input type="text" name="note_{{ ritual }}" placeholder="Notes">
             </div>
+        </div>
         {% endfor %}
 
-        <button type="submit">Save Log</button>
+        <button type="submit" class="submit-btn">Save Planner Entry</button>
     </form>
-
-    <div class="nav">
-        <a href="/">Back to Alarm</a>
-        <a href="/sigils">Go to Sigil Generator</a>
-    </div>
+</div>
 </body>
 </html>

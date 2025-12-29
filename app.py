@@ -1,38 +1,43 @@
 import os
-import io
-import base64
-import json
+from flask import Flask, render_template, request, jsonify, send_file
 from datetime import datetime, timedelta, timezone
 import pytz
 import requests
+import io
+import base64
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle
-from flask import Flask, render_template, request, jsonify, send_file
+import json
 
-# ---------------- Flask App ----------------
 app = Flask(__name__)
 
-# ---------------- Alchemelody Alarm Setup ----------------
+# ---------------- Alchemelody Alarm Settings ----------------
 colors = {"Sun":"orange","Mars":"red","Venus":"green","Jupiter":"purple","Moon":"blue","Mercury":"yellow","Saturn":"indigo"}
 planets = ["Sun","Venus","Mercury","Moon","Saturn","Jupiter","Mars"]
 
 def calculate_planetary_hours(latitude, longitude):
-    api_key = os.environ.get("API_KEY")
+    api_key = os.environ.get("OPENWEATHER_API_KEY")
     if not api_key:
-        raise ValueError("API_KEY environment variable not set")
+        raise ValueError("OPENWEATHER_API_KEY not set")
+
     url = f"http://api.openweathermap.org/data/2.5/weather?lat={latitude}&lon={longitude}&appid={api_key}"
     data = requests.get(url).json()
+
     tz_offset = data.get("timezone", 0)
     tz = timezone(timedelta(seconds=tz_offset))
     sunrise = datetime.utcfromtimestamp(data["sys"]["sunrise"]).replace(tzinfo=timezone.utc).astimezone(tz)
     sunset = datetime.utcfromtimestamp(data["sys"]["sunset"]).replace(tzinfo=timezone.utc).astimezone(tz)
+
     day_duration = sunset - sunrise
     day_hour = day_duration / 12
     night_duration = timedelta(hours=24) - day_duration
     night_hour = night_duration / 12
+
     hours = []
     current_time = sunrise
+
+    # Daytime hours
     for i in range(12):
         hours.append({
             "time_str": current_time.strftime("%I:%M %p"),
@@ -41,6 +46,8 @@ def calculate_planetary_hours(latitude, longitude):
             "planet": planets[i % 7]
         })
         current_time += day_hour
+
+    # Nighttime hours
     for i in range(12):
         hours.append({
             "time_str": current_time.strftime("%I:%M %p"),
@@ -49,16 +56,44 @@ def calculate_planetary_hours(latitude, longitude):
             "planet": planets[(i + 12) % 7]
         })
         current_time += night_hour
+
     return hours
 
-# ---------------- Planner Settings ----------------
+@app.route("/", methods=["GET","POST"])
+def index():
+    try:
+        with open("location.json","r") as f:
+            location = json.load(f)
+    except FileNotFoundError:
+        location = {"latitude":40.4406,"longitude":-79.9959}
+
+    if request.method == "POST":
+        lat = request.form.get("latitude")
+        lon = request.form.get("longitude")
+        if lat and lon:
+            location = {"latitude":float(lat),"longitude":float(lon)}
+            with open("location.json","w") as f:
+                json.dump(location,f)
+
+    hours = calculate_planetary_hours(location["latitude"], location["longitude"])
+    return render_template("index.html", hours=hours, colors=colors, location=location)
+
+@app.route("/play", methods=["POST"])
+def play_sound():
+    data = request.get_json()
+    planet = data.get("planet")
+    if not planet:
+        return jsonify({"message":"No planet provided"}), 400
+    print(f"Playing sound for {planet}")
+    return jsonify({"message":f"Playing sound for {planet}"}), 200
+
+# ---------------- Planner & Sigils Setup ----------------
 OPENWEATHER_API_KEY = os.environ.get("OPENWEATHER_API_KEY", "")
 LOCATION = "Pittsburgh, US"
 LOG_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "logs")
 os.makedirs(LOG_FOLDER, exist_ok=True)
 RITUALS = ["LIRP", "RR", "LBRP", "LIRH", "MP", "GIRP", "GIRH", "RC"]
 
-# ---------------- Planner Helper Functions ----------------
 def get_elemental_quarter():
     current_hour = datetime.now(pytz.timezone("US/Eastern")).hour
     if 0 <= current_hour < 6:
@@ -152,7 +187,7 @@ def get_planetary_hour():
     except Exception:
         return "Planetary hour data unavailable"
 
-# ---------------- Sigil Generator Setup ----------------
+# ---------------- Sigil Generator ----------------
 letter_mapping = {
     "A": [("A", "#FFFF00")], "E": [("A", "#FFFF00")], "B": [("B", "#FFFF00")],
     "C": [("G", "#0000FF")], "CH": [("Ch", "#FFD700")], "H": [("H", "#FF0000")],
@@ -191,6 +226,7 @@ def draw_rose_sigil(word="JAMES"):
     all_positions = {}
     ordered_outer_letters = ["H","Z","V","E","Q","X","O","S","N","L","I","T","Ch"]
     ordered_middle_letters = ["R","RH","P","PH","F","K","KH","TH","G","GH","D","DH","B"]
+    ordered_mother_letters = ["M","A","Sh"]
     all_positions.update({
         letter: (-np.cos(i*(2*np.pi/len(ordered_outer_letters)))*2,
                  np.sin(i*(2*np.pi/len(ordered_outer_letters)))*2)
@@ -217,8 +253,7 @@ def draw_rose_sigil(word="JAMES"):
             if letter not in all_positions:
                 continue
             x, y = all_positions[letter]
-            ax.text(x, y, letter, fontsize=16, ha='center', va='center',
-                    color=color, fontweight='bold')
+            ax.text(x, y, letter, fontsize=16, ha='center', va='center', color=color, fontweight='bold')
             if prev_pos:
                 ax.plot([prev_pos[0], x], [prev_pos[1], y], color=prev_color, lw=2)
             if (x,y) in seen_positions:
@@ -242,36 +277,7 @@ def draw_rose_sigil(word="JAMES"):
     plt.close()
     return img_base64
 
-# ---------------- Flask Routes ----------------
-
-@app.route("/", methods=["GET","POST"])
-def index():
-    try:
-        with open("location.json","r") as f:
-            location = json.load(f)
-    except FileNotFoundError:
-        location = {"latitude":40.4406,"longitude":-79.9959}
-
-    if request.method == "POST":
-        lat = request.form.get("latitude")
-        lon = request.form.get("longitude")
-        if lat and lon:
-            location = {"latitude":float(lat),"longitude":float(lon)}
-            with open("location.json","w") as f:
-                json.dump(location,f)
-
-    hours = calculate_planetary_hours(location["latitude"], location["longitude"])
-    return render_template("index.html", hours=hours, colors=colors, location=location)
-
-@app.route("/play", methods=["POST"])
-def play_sound():
-    data = request.get_json()
-    planet = data.get("planet")
-    if not planet:
-        return jsonify({"message":"No planet provided"}), 400
-    print(f"Playing sound for {planet}")
-    return jsonify({"message":f"Playing sound for {planet}"}), 200
-
+# ---------------- Routes ----------------
 @app.route("/planner", methods=["GET","POST"])
 def planner():
     current_time = datetime.now(pytz.timezone("US/Eastern"))
@@ -313,7 +319,8 @@ def planner():
                            moon_phase=moon_phase,
                            weather=weather,
                            planetary_hour=planetary_hour,
-                           rituals=RITUALS)
+                           rituals=RITUALS,
+                           colors=colors)
 
 @app.route("/sigils", methods=["GET","POST"])
 def sigils():
@@ -322,7 +329,7 @@ def sigils():
         word = request.form.get("word","").strip()
         if word:
             sigil_image = draw_rose_sigil(word)
-    return render_template("sigils.html", sigil_image=sigil_image)
+    return render_template("sigils.html", sigil_image=sigil_image, colors=colors)
 
 # ---------------- Run App ----------------
 if __name__ == "__main__":

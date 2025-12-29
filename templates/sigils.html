@@ -2,31 +2,41 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Alchemelody Sigil Generator</title>
+    <title>Alchemelody Sigils</title>
     <style>
-        body { font-family: Arial, sans-serif; background:#e6e6fa; text-align:center; margin:20px; }
-        input { padding:5px; margin:5px; }
-        button { padding:5px 10px; margin:5px; }
-        img { margin-top:20px; border:2px solid #333; }
-        .nav { margin-top:20px; }
-        .nav a { margin:0 10px; text-decoration:none; font-weight:bold; color:#333; }
+        body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; text-align: center; }
+        header { background: #222; padding: 10px; }
+        header h1 { margin: 0; color: #FFD700; }
+        nav { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
+        nav button { padding: 8px 12px; background: #333; color: #fff; border: none; cursor: pointer; border-radius: 5px; }
+        nav button:hover { background: #555; }
+        .sigil-form { margin-top: 20px; }
+        input[type="text"] { padding: 8px; border-radius: 5px; border: none; width: 200px; }
+        button.generate-btn { padding: 8px 12px; background: #FFD700; color: #111; border: none; border-radius: 5px; cursor: pointer; }
+        button.generate-btn:hover { background: #FFA500; }
+        .sigil-image { margin-top: 20px; }
     </style>
 </head>
 <body>
+<header>
     <h1>Alchemelody Sigil Generator</h1>
+</header>
+<nav>
+    <button onclick="location.href='/'">Alarm</button>
+    <button onclick="location.href='/planner'">Planner</button>
+</nav>
 
-    <form method="POST">
-        <input type="text" name="word" placeholder="Enter Word or Name" required>
-        <button type="submit">Generate Sigil</button>
+<div class="sigil-form">
+    <form method="post">
+        <input type="text" name="word" placeholder="Enter Word" required>
+        <button type="submit" class="generate-btn">Generate Sigil</button>
     </form>
+</div>
 
-    {% if sigil_image %}
-        <img src="data:image/png;base64,{{sigil_image}}" alt="Generated Sigil">
-    {% endif %}
-
-    <div class="nav">
-        <a href="/">Back to Alarm</a>
-        <a href="/planner">Go to Planner</a>
-    </div>
+{% if sigil_image %}
+<div class="sigil-image">
+    <img src="data:image/png;base64,{{ sigil_image }}" alt="Sigil" style="max-width: 80%; border: 2px solid #FFD700; border-radius: 10px;">
+</div>
+{% endif %}
 </body>
 </html>
