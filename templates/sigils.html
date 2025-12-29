@@ -2,45 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alchemelody Sigil Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: black; color: white; }
-        h1 { font-family: 'Playfair Display', serif; color: #FFD700; font-size: 2rem; }
-        form { margin: 20px auto; padding: 15px; background: #111; border-radius: 10px; display: inline-block; }
-        input, button { font-size: 1rem; padding: 10px; margin: 10px; border-radius: 5px; }
-        button { cursor: pointer; font-weight: bold; background-color: #007BFF; color: white; border: none; }
-        button:hover { background-color: #0056b3; }
-        .sigil-container { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
-        .sigil-container img { margin-top: 20px; border: 2px solid white; padding: 10px; background: black; border-radius: 10px; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f4f4f4;
+        }
+        form {
+            background: white;
+            display: inline-block;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        input, button {
+            font-size: 18px;
+            padding: 10px;
+            margin: 10px;
+        }
+        img {
+            margin-top: 20px;
+            border: 2px solid black;
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Switch to Alarm -->
-    <form action="{{ url_for('index') }}" method="get">
-        <button type="submit">Go to Alarm</button>
-    </form>
+<!-- HEADER NAV -->
+<div style="margin-bottom:20px;">
+    <a href="{{ url_for('planner') }}"><button>Planner</button></a>
+    <a href="{{ url_for('sigils') }}"><button>Sigils</button></a>
+    <a href="{{ url_for('alarm') }}"><button>Planetary Alarm</button></a>
+</div>
+<hr>
 
-    <!-- Switch to Planner -->
-    <form action="{{ url_for('planner') }}" method="get">
-        <button type="submit">Go to Planner</button>
-    </form>
-    <hr>
+<h1>Seeds of Songs</h1>
 
-    <h1>Seeds of Songs</h1>
-    <form method="POST">
-        <label for="word">Enter a word:</label>
-        <input type="text" id="word" name="word" required>
-        <button type="submit">Generate Sigil</button>
-    </form>
+<form method="POST">
+    <label for="word">Enter a word:</label><br>
+    <input type="text" id="word" name="word" required>
+    <br>
+    <button type="submit">Generate Sigil</button>
+</form>
 
-    {% if sigil_image %}
-        <div class="sigil-container">
-            <h2>Generated Sigil:</h2>
-            <img src="data:image/png;base64,{{ sigil_image }}" alt="Generated Sigil">
-        </div>
-    {% endif %}
+{% if sigil_image %}
+    <div>
+        <h2>Generated Sigil</h2>
+        <img src="data:image/png;base64,{{ sigil_image }}">
+    </div>
+{% endif %}
 
 </body>
 </html>
