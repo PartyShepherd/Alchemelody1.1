@@ -1,175 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Ritual System – Alarm</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alchemelody</title>
 
-    <style>
-        body {
-            margin: 0;
-            background: radial-gradient(circle at top, #111 0%, #000 65%);
-            color: #fff;
-            font-family: Arial, Helvetica, sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
 
-        /* ---------- NAV ---------- */
-        nav {
-            display: flex;
-            justify-content: space-around;
-            padding: 14px;
-            background: #000;
-            border-bottom: 1px solid #333;
-        }
+<!-- Favicon -->
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
 
-        nav a {
-            color: #fff;
-            text-decoration: none;
-            font-size: 14px;
-            letter-spacing: 1px;
-            padding: 6px 14px;
-            border: 1px solid #444;
-            border-radius: 8px;
-            transition: background 0.2s;
-        }
-
-        nav a:hover {
-            background: #222;
-        }
-
-        /* ---------- CONTENT ---------- */
-        .content {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .alarm-box {
-            background: rgba(20,20,20,0.9);
-            border: 1px solid #333;
-            border-radius: 16px;
-            padding: 34px;
-            width: 320px;
-            text-align: center;
-            box-shadow: 0 0 25px rgba(255,255,255,0.06);
-        }
-
-        h1 {
-            margin-top: 0;
-            font-size: 26px;
-            letter-spacing: 2px;
-        }
-
-        .clock {
-            font-size: 42px;
-            margin: 20px 0;
-            letter-spacing: 2px;
-        }
-
-        input[type="time"] {
-            width: 100%;
-            padding: 10px;
-            font-size: 18px;
-            background: #000;
-            color: #fff;
-            border: 1px solid #444;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        button {
-            width: 100%;
-            padding: 12px;
-            font-size: 16px;
-            background: #111;
-            color: #fff;
-            border: 1px solid #555;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #222;
-        }
-
-        .status {
-            margin-top: 14px;
-            font-size: 14px;
-            opacity: 0.85;
-        }
-    </style>
+<style>
+    body { font-family: Arial, sans-serif; text-align: center; background-color: black; color: white; }
+    .header { display: flex; align-items: center; justify-content: center; margin: 20px 0; }
+    .header h1 { margin: 0; font-size: 2rem; font-family: "Fontdiner Swanky", serif; }
+    .header img { width: 50px; height: auto; margin-left: 10px; }
+    .subheading { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-top: 5px; margin-bottom: 10px; font-style: italic; }
+    form { margin-top: 10px; display: inline-block; text-align: center; }
+    input { padding: 5px; font-size: 0.9rem; width: 100px; margin: 5px; }
+    .input-label { display: inline-block; margin: 5px; font-size: 0.9rem; }
+    button { padding: 5px 10px; font-size: 1rem; cursor: pointer; border: none; color: black; font-family: 'Playfair Display', serif; font-weight: bold; border-radius: 5px; }
+    button.Sun { background-color: orange; }
+    button.Mars { background-color: red; }
+    button.Venus { background-color: green; }
+    button.Jupiter { background-color: purple; }
+    button.Moon { background-color: blue; }
+    button.Mercury { background-color: yellow; }
+    button.Saturn { background-color: indigo; }
+    .hour-entry { margin: 10px; padding: 10px; text-align: center; }
+    .planet-time { color: white; font-family: "Fontdiner Swanky", serif; }
+    #flash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: none; }
+    #consentButton { margin: 20px; padding: 10px 15px; font-size: 1rem; border-radius: 5px; font-family: 'Playfair Display', serif; font-weight: bold; }
+</style>
 </head>
 <body>
 
-<!-- NAVIGATION -->
-<nav>
-    <a href="/">Alarm</a>
-    <a href="/planner">Planner</a>
-    <a href="/sigil">Sigil</a>
-</nav>
+<!-- Navigation Buttons -->
+<form action="{{ url_for('planner') }}" method="get">
+    <button type="submit">Go to Planner</button>
+</form>
+<form action="{{ url_for('sigils') }}" method="get">
+    <button type="submit">Go to Sigils</button>
+</form>
+<hr>
 
-<!-- MAIN CONTENT -->
-<div class="content">
-    <div class="alarm-box">
-        <h1>ALARM</h1>
+<div class="header">
+    <h1>Alchemelody</h1>
+    <img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
+</div>
+<p class="subheading">Official App of the band: The Source of All</p>
 
-        <div class="clock" id="clock">--:--:--</div>
+<form method="POST">
+    <label class="input-label" for="latitude">Latitude:</label>
+    <input type="text" name="latitude" id="latitude" placeholder="Enter Latitude" value="{{ location.latitude }}" required>
+    <label class="input-label" for="longitude">Longitude:</label>
+    <input type="text" name="longitude" id="longitude" placeholder="Enter Longitude" value="{{ location.longitude }}" required>
+    <button type="submit">Set Location</button>
+</form>
 
-        <input type="time" id="alarmTime">
-
-        <button onclick="setAlarm()">Set Alarm</button>
-
-        <div class="status" id="status">No alarm set</div>
-    </div>
+<div>
+    <button id="consentButton" onclick="enableAlarms()">Enable Alarm Sounds in Background</button>
 </div>
 
-<audio id="alarmSound">
-    <source src="{{ url_for('static', filename='alarm.mp3') }}" type="audio/mpeg">
-</audio>
+<div id="flash"></div>
+<ul>
+    {% for entry in hours %}
+    <li class="hour-entry">
+        <span class="planet-time {{ entry.planet }}">{{ entry.time_str }}</span>
+        <button class="{{ entry.planet }}" onclick="playSound('{{ entry.planet }}', '{{ colors[entry.planet] }}')">
+            Play {{ entry.planet }}
+        </button>
+    </li>
+    {% endfor %}
+</ul>
 
 <script>
-    let alarmTime = null;
-    let alarmActive = false;
+let alarmsEnabled = false;
+let triggeredHours = new Set();
 
-    function updateClock() {
-        const now = new Date();
-        const h = String(now.getHours()).padStart(2, '0');
-        const m = String(now.getMinutes()).padStart(2, '0');
-        const s = String(now.getSeconds()).padStart(2, '0');
+const planetaryHours = [
+    {% for entry in hours %}
+    {hour: {{ entry.hour }}, minute: {{ entry.minute }}, planet: "{{ entry.planet }}", color: "{{ colors[entry.planet] }}" },
+    {% endfor %}
+];
 
-        document.getElementById("clock").textContent = `${h}:${m}:${s}`;
+function enableAlarms() {
+    alarmsEnabled = true;
+    document.getElementById("consentButton").style.display = "none";
+}
 
-        if (alarmActive && alarmTime === `${h}:${m}`) {
-            triggerAlarm();
-        }
-    }
+function flashColor(color) {
+    const flashDiv = document.getElementById("flash");
+    flashDiv.style.backgroundColor = color;
+    flashDiv.style.display = "block";
+    setTimeout(() => { flashDiv.style.display = "none"; }, 500);
+}
 
-    function setAlarm() {
-        const t = document.getElementById("alarmTime").value;
-        if (!t) {
-            document.getElementById("status").textContent = "Select a time";
-            return;
-        }
+function playSound(planet, color) {
+    flashColor(color);
+    const audio = new Audio(`/static/sounds/${planet}.wav`);
+    audio.onerror = function () { console.error(`Failed to load audio for ${planet}`); };
+    audio.play().catch(error => console.error("Playback error:", error));
+    fetch("/play", {method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({planet})})
+        .then(res=>res.json()).then(data=>console.log(data.message)).catch(err=>console.error(err));
+}
 
-        alarmTime = t;
-        alarmActive = true;
-        document.getElementById("status").textContent = `Alarm set for ${alarmTime}`;
-    }
-
-    function triggerAlarm() {
-        alarmActive = false;
-        document.getElementById("status").textContent = "ALARM ACTIVE";
-        document.getElementById("alarmSound").play();
-        alert("ALARM");
-    }
-
-    setInterval(updateClock, 1000);
-    updateClock();
+function checkPlanetaryHours() {
+    if (!alarmsEnabled) return;
+    const now = new Date();
+    const currentMinutes = now.getHours()*60+now.getMinutes();
+    planetaryHours.forEach(entry=>{
+        const entryMinutes = entry.hour*60+entry.minute;
+        const key = `${entry.hour}:${entry.minute}`;
+        if(currentMinutes===entryMinutes){
+            if(!triggeredHours.has(key)){
+                playSound(entry.planet, entry.color);
+                triggeredHours.add(key);
+            }
+        } else { triggeredHours.delete(key); }
+    });
+}
+setInterval(checkPlanetaryHours,60000);
 </script>
-
 </body>
 </html>
