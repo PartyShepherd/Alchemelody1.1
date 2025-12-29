@@ -5,26 +5,41 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Alchemelody Sigil Generator</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background-color: #f4f4f4; }
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
         h1 { color: #333; }
-        form { margin: 20px auto; padding: 15px; background: white; border-radius: 10px; box-shadow: 0px 0px 10px rgba(0,0,0,0.1); display: inline-block; }
+        form {
+            margin: 20px auto;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+            display: inline-block;
+        }
         input, button { font-size: 18px; padding: 10px; margin: 10px; border: 1px solid #ccc; border-radius: 5px; }
         button { cursor: pointer; background-color: #007BFF; color: white; border: none; }
         button:hover { background-color: #0056b3; }
         .sigil-container { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
         .sigil-container img { margin-top: 20px; border: 2px solid black; padding: 10px; background: white; border-radius: 10px; }
+        .nav-buttons { margin-bottom: 15px; }
+        .nav-buttons form { display: inline-block; margin: 0 5px; }
     </style>
 </head>
 <body>
 
-<!-- Navigation Buttons -->
-<form action="{{ url_for('index') }}" method="get">
-    <button type="submit">Back to Planetary Hours</button>
-</form>
-<form action="{{ url_for('planner') }}" method="get">
-    <button type="submit">Go to Planner</button>
-</form>
-<hr>
+<!-- Navigation Buttons at the Top -->
+<div class="nav-buttons">
+    <form action="{{ url_for('planner') }}" method="get">
+        <button type="submit">Planner</button>
+    </form>
+    <form action="{{ url_for('index') }}" method="get">
+        <button type="submit">Planetary Hours</button>
+    </form>
+</div>
 
 <h1>Seeds of Songs</h1>
 <form method="POST">

@@ -35,18 +35,21 @@
     .planet-time { color: white; font-family: "Fontdiner Swanky", serif; }
     #flash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: none; }
     #consentButton { margin: 20px; padding: 10px 15px; font-size: 1rem; border-radius: 5px; font-family: 'Playfair Display', serif; font-weight: bold; }
+    .nav-buttons { margin-bottom: 15px; }
+    .nav-buttons form { display: inline-block; margin: 0 5px; }
 </style>
 </head>
 <body>
 
-<!-- Navigation Buttons -->
-<form action="{{ url_for('planner') }}" method="get">
-    <button type="submit">Go to Planner</button>
-</form>
-<form action="{{ url_for('sigils') }}" method="get">
-    <button type="submit">Go to Sigils</button>
-</form>
-<hr>
+<!-- Navigation Buttons at the Top -->
+<div class="nav-buttons">
+    <form action="{{ url_for('planner') }}" method="get">
+        <button type="submit">Planner</button>
+    </form>
+    <form action="{{ url_for('sigils') }}" method="get">
+        <button type="submit">Sigils</button>
+    </form>
+</div>
 
 <div class="header">
     <h1>Alchemelody</h1>

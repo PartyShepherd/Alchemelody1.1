@@ -7,14 +7,15 @@
 </head>
 <body>
 
-<!-- Navigation Buttons -->
-<form action="{{ url_for('index') }}" method="get">
-    <button type="submit">Back to Planetary Hours</button>
-</form>
-<form action="{{ url_for('sigils') }}" method="get">
-    <button type="submit">Go to Sigils</button>
-</form>
-<hr>
+<!-- Navigation Buttons at the Top -->
+<div style="margin-bottom: 15px;">
+    <form action="{{ url_for('index') }}" method="get" style="display:inline-block; margin-right:5px;">
+        <button type="submit">Planetary Hours</button>
+    </form>
+    <form action="{{ url_for('sigils') }}" method="get" style="display:inline-block;">
+        <button type="submit">Sigils</button>
+    </form>
+</div>
 
 <h1>Digital Magical Planner</h1>
 <p><strong>Current Time:</strong> {{ formatted_date }} {{ formatted_time }}</p>
