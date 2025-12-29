@@ -1,118 +1,174 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Planetary Hour Alarm</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Ritual System – Alarm</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background: radial-gradient(circle at top, #111 0%, #000 65%);
+            color: #fff;
+            font-family: Arial, Helvetica, sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-<style>
-body {
-    background-color: black;
-    color: white;
-    text-align: center;
-    font-family: Arial, sans-serif;
-}
-button {
-    padding: 8px 14px;
-    margin: 5px;
-    font-weight: bold;
-    border-radius: 5px;
-    cursor: pointer;
-}
-button.Sun { background: orange; }
-button.Mars { background: red; }
-button.Venus { background: green; }
-button.Jupiter { background: purple; }
-button.Moon { background: blue; }
-button.Mercury { background: yellow; color:black; }
-button.Saturn { background: indigo; }
-.hour-entry { margin: 10px 0; }
-#flash {
-    position: fixed;
-    inset: 0;
-    display: none;
-    z-index: 999;
-}
-</style>
+        /* ---------- NAV ---------- */
+        nav {
+            display: flex;
+            justify-content: space-around;
+            padding: 14px;
+            background: #000;
+            border-bottom: 1px solid #333;
+        }
+
+        nav a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            letter-spacing: 1px;
+            padding: 6px 14px;
+            border: 1px solid #444;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        nav a:hover {
+            background: #222;
+        }
+
+        /* ---------- CONTENT ---------- */
+        .content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .alarm-box {
+            background: rgba(20,20,20,0.9);
+            border: 1px solid #333;
+            border-radius: 16px;
+            padding: 34px;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 0 25px rgba(255,255,255,0.06);
+        }
+
+        h1 {
+            margin-top: 0;
+            font-size: 26px;
+            letter-spacing: 2px;
+        }
+
+        .clock {
+            font-size: 42px;
+            margin: 20px 0;
+            letter-spacing: 2px;
+        }
+
+        input[type="time"] {
+            width: 100%;
+            padding: 10px;
+            font-size: 18px;
+            background: #000;
+            color: #fff;
+            border: 1px solid #444;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            background: #111;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #222;
+        }
+
+        .status {
+            margin-top: 14px;
+            font-size: 14px;
+            opacity: 0.85;
+        }
+    </style>
 </head>
 <body>
 
-<!-- HEADER NAV -->
-<div style="margin-bottom:20px;">
-    <a href="{{ url_for('planner') }}"><button>Planner</button></a>
-    <a href="{{ url_for('sigils') }}"><button>Sigils</button></a>
-    <a href="{{ url_for('alarm') }}"><button>Planetary Alarm</button></a>
+<!-- NAVIGATION -->
+<nav>
+    <a href="/">Alarm</a>
+    <a href="/planner">Planner</a>
+    <a href="/sigil">Sigil</a>
+</nav>
+
+<!-- MAIN CONTENT -->
+<div class="content">
+    <div class="alarm-box">
+        <h1>ALARM</h1>
+
+        <div class="clock" id="clock">--:--:--</div>
+
+        <input type="time" id="alarmTime">
+
+        <button onclick="setAlarm()">Set Alarm</button>
+
+        <div class="status" id="status">No alarm set</div>
+    </div>
 </div>
-<hr>
 
-<h1 style="font-family:'Fontdiner Swanky';">Alchemelody</h1>
-
-<form method="POST">
-    Latitude:
-    <input type="text" name="latitude" value="{{ location.latitude }}" required>
-    Longitude:
-    <input type="text" name="longitude" value="{{ location.longitude }}" required>
-    <button type="submit">Set Location</button>
-</form>
-
-<button onclick="enableAlarms()">Enable Alarm Sounds</button>
-
-<div id="flash"></div>
-
-<ul style="list-style:none; padding:0;">
-{% for entry in hours %}
-<li class="hour-entry">
-    {{ entry.time_str }}
-    <button class="{{ entry.planet }}"
-        onclick="playSound('{{ entry.planet }}','{{ colors[entry.planet] }}')">
-        {{ entry.planet }}
-    </button>
-</li>
-{% endfor %}
-</ul>
+<audio id="alarmSound">
+    <source src="{{ url_for('static', filename='alarm.mp3') }}" type="audio/mpeg">
+</audio>
 
 <script>
-let alarmsEnabled = false;
-let triggered = new Set();
+    let alarmTime = null;
+    let alarmActive = false;
 
-const planetaryHours = [
-{% for entry in hours %}
-{hour: {{ entry.hour }}, minute: {{ entry.minute }}, planet: "{{ entry.planet }}", color: "{{ colors[entry.planet] }}"},
-{% endfor %}
-];
+    function updateClock() {
+        const now = new Date();
+        const h = String(now.getHours()).padStart(2, '0');
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
 
-function enableAlarms() {
-    alarmsEnabled = true;
-}
+        document.getElementById("clock").textContent = `${h}:${m}:${s}`;
 
-function flash(color) {
-    const f = document.getElementById("flash");
-    f.style.backgroundColor = color;
-    f.style.display = "block";
-    setTimeout(()=>f.style.display="none",400);
-}
-
-function playSound(planet, color) {
-    flash(color);
-    const audio = new Audio(`/static/sounds/${planet}.wav`);
-    audio.play();
-    fetch("/play",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({planet})});
-}
-
-setInterval(()=>{
-    if(!alarmsEnabled) return;
-    const now = new Date();
-    planetaryHours.forEach(h=>{
-        const key = `${h.hour}:${h.minute}`;
-        if(now.getHours()==h.hour && now.getMinutes()==h.minute && !triggered.has(key)){
-            playSound(h.planet,h.color);
-            triggered.add(key);
+        if (alarmActive && alarmTime === `${h}:${m}`) {
+            triggerAlarm();
         }
-        if(now.getMinutes()!=h.minute) triggered.delete(key);
-    });
-},60000);
+    }
+
+    function setAlarm() {
+        const t = document.getElementById("alarmTime").value;
+        if (!t) {
+            document.getElementById("status").textContent = "Select a time";
+            return;
+        }
+
+        alarmTime = t;
+        alarmActive = true;
+        document.getElementById("status").textContent = `Alarm set for ${alarmTime}`;
+    }
+
+    function triggerAlarm() {
+        alarmActive = false;
+        document.getElementById("status").textContent = "ALARM ACTIVE";
+        document.getElementById("alarmSound").play();
+        alert("ALARM");
+    }
+
+    setInterval(updateClock, 1000);
+    updateClock();
 </script>
 
 </body>
