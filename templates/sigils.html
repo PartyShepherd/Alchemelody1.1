@@ -1,42 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Alchemelody Sigils</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; text-align: center; }
-        header { background: #222; padding: 10px; }
-        header h1 { margin: 0; color: #FFD700; }
-        nav { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
-        nav button { padding: 8px 12px; background: #333; color: #fff; border: none; cursor: pointer; border-radius: 5px; }
-        nav button:hover { background: #555; }
-        .sigil-form { margin-top: 20px; }
-        input[type="text"] { padding: 8px; border-radius: 5px; border: none; width: 200px; }
-        button.generate-btn { padding: 8px 12px; background: #FFD700; color: #111; border: none; border-radius: 5px; cursor: pointer; }
-        button.generate-btn:hover { background: #FFA500; }
-        .sigil-image { margin-top: 20px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alchemelody Sigil</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
+
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+<style>
+body { font-family: Arial, sans-serif; text-align: center; background-color: black; color: white; }
+.header { display: flex; align-items: center; justify-content: center; margin: 20px 0; }
+.header h1 { margin: 0; font-size: 2rem; font-family: "Fontdiner Swanky", serif; }
+.header img { width: 50px; height: auto; margin-left: 10px; }
+.subheading { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-top: 5px; margin-bottom: 10px; font-style: italic; }
+.nav { margin: 10px 0; }
+.nav button { margin: 5px; padding: 5px 10px; border-radius: 5px; font-family: 'Playfair Display', serif; font-weight: bold; cursor: pointer; }
+.sigil-container { margin-top: 20px; }
+#sigilCanvas { border: 2px solid white; background-color: black; }
+button.generate-btn { margin-top: 15px; padding: 5px 15px; font-family: 'Playfair Display', serif; font-weight: bold; border-radius: 5px; cursor: pointer; }
+</style>
 </head>
 <body>
-<header>
-    <h1>Alchemelody Sigil Generator</h1>
-</header>
-<nav>
-    <button onclick="location.href='/'">Alarm</button>
-    <button onclick="location.href='/planner'">Planner</button>
-</nav>
 
-<div class="sigil-form">
-    <form method="post">
-        <input type="text" name="word" placeholder="Enter Word" required>
-        <button type="submit" class="generate-btn">Generate Sigil</button>
-    </form>
+<div class="nav">
+    <button onclick="location.href='{{ url_for('index') }}'">Back to Alarm</button>
+    <button onclick="location.href='{{ url_for('planner') }}'">Go to Planner</button>
 </div>
 
-{% if sigil_image %}
-<div class="sigil-image">
-    <img src="data:image/png;base64,{{ sigil_image }}" alt="Sigil" style="max-width: 80%; border: 2px solid #FFD700; border-radius: 10px;">
+<div class="header">
+    <h1>Sigil Generator</h1>
+    <img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
 </div>
-{% endif %}
+
+<p class="subheading">Manifest your alchemelodic intent</p>
+
+<div class="sigil-container">
+    <canvas id="sigilCanvas" width="400" height="400"></canvas><br>
+    <button class="generate-btn" onclick="generateSigil()">Generate Sigil</button>
+</div>
+
+<script>
+function generateSigil() {
+    const canvas = document.getElementById("sigilCanvas");
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Example sigil: simple random lines
+    for (let i = 0; i < 10; i++) {
+        ctx.strokeStyle = "white";
+        ctx.lineWidth = Math.random() * 3 + 1;
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.stroke();
+    }
+}
+</script>
+
 </body>
 </html>

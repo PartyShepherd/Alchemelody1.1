@@ -1,60 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Alchemelody Planner</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #111; color: #fff; margin: 0; padding: 0; }
-        header { background: #222; padding: 10px; text-align: center; }
-        header h1 { margin: 0; color: #FFD700; }
-        nav { display: flex; justify-content: center; gap: 10px; margin: 10px 0; }
-        nav button { padding: 8px 12px; background: #333; color: #fff; border: none; cursor: pointer; border-radius: 5px; }
-        nav button:hover { background: #555; }
-        .planner-container { max-width: 700px; margin: auto; padding: 10px; background: #222; border-radius: 10px; }
-        label { display: block; margin-top: 10px; font-weight: bold; }
-        input, textarea { width: 100%; padding: 5px; margin-top: 2px; border-radius: 5px; border: none; }
-        .ritual { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
-        .ritual input[type="checkbox"] { margin-right: 5px; }
-        button.submit-btn { margin-top: 15px; padding: 8px 12px; background: #FFD700; color: #111; border: none; border-radius: 5px; cursor: pointer; }
-        button.submit-btn:hover { background: #FFA500; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alchemelody Planner</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fontdiner+Swanky&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400&display=swap" rel="stylesheet">
+
+<link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='images/favicon.ico') }}">
+
+<style>
+body { font-family: Arial, sans-serif; text-align: center; background-color: black; color: white; }
+.header { display: flex; align-items: center; justify-content: center; margin: 20px 0; }
+.header h1 { margin: 0; font-size: 2rem; font-family: "Fontdiner Swanky", serif; }
+.header img { width: 50px; height: auto; margin-left: 10px; }
+.subheading { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-top: 5px; margin-bottom: 10px; font-style: italic; }
+.nav { margin: 10px 0; }
+.nav button { margin: 5px; padding: 5px 10px; border-radius: 5px; font-family: 'Playfair Display', serif; font-weight: bold; cursor: pointer; }
+.planner-content { margin-top: 20px; font-family: 'Playfair Display', serif; }
+input, textarea { padding: 5px; font-size: 0.9rem; width: 80%; margin: 5px; border-radius: 5px; }
+button.submit-btn { padding: 5px 15px; font-family: 'Playfair Display', serif; font-weight: bold; border-radius: 5px; cursor: pointer; }
+</style>
 </head>
 <body>
-<header>
+
+<div class="nav">
+    <button onclick="location.href='{{ url_for('index') }}'">Back to Alarm</button>
+    <button onclick="location.href='{{ url_for('sigil') }}'">Go to Sigil</button>
+</div>
+
+<div class="header">
     <h1>Planner</h1>
-</header>
-<nav>
-    <button onclick="location.href='/'">Alarm</button>
-    <button onclick="location.href='/sigils'">Sigils</button>
-</nav>
-<div class="planner-container">
-    <p><strong>Date:</strong> {{ formatted_date }} | <strong>Time:</strong> {{ formatted_time }} | <strong>Day:</strong> {{ day_of_week }}</p>
-    <p><strong>Elemental Quarter:</strong> {{ elemental_quarter }} | <strong>Moon Phase:</strong> {{ moon_phase }}</p>
-    <p><strong>Weather:</strong> {{ weather }} | <strong>Planetary Hour:</strong> {{ planetary_hour }}</p>
+    <img src="{{ url_for('static', filename='images/header.jpg') }}" alt="Header Image">
+</div>
 
-    <form method="post">
-        <label for="physical_condition">Physical Condition:</label>
-        <input type="text" name="physical_condition" id="physical_condition">
+<p class="subheading">Plan your alchemelodic journey</p>
 
-        <label for="meditation">Meditation Notes:</label>
-        <textarea name="meditation" id="meditation" rows="3"></textarea>
-
-        <label for="tarot">Tarot Notes:</label>
-        <textarea name="tarot" id="tarot" rows="3"></textarea>
-
-        <h3>Rituals:</h3>
-        {% for ritual in rituals %}
-        <div class="ritual">
-            <label>{{ ritual }}</label>
-            <div>
-                <input type="checkbox" name="rituals" value="{{ ritual }}">
-                <input type="text" name="note_{{ ritual }}" placeholder="Notes">
-            </div>
-        </div>
-        {% endfor %}
-
-        <button type="submit" class="submit-btn">Save Planner Entry</button>
+<div class="planner-content">
+    <form>
+        <input type="text" placeholder="Title"><br>
+        <textarea rows="5" placeholder="Notes or Plan..."></textarea><br>
+        <button type="submit" class="submit-btn">Save Plan</button>
     </form>
 </div>
+
 </body>
 </html>
